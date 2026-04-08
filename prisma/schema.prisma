@@ -9,12 +9,13 @@ datasource db {
 }
 
 model User {
-  id             String              @id @default(uuid())
-  username       String              @unique
-  createdAt      DateTime            @default(now())
-  conversations  Conversation[]
-  relationStates RelationshipState[]
-  memories       Memory[]
+  id              String              @id @default(uuid())
+  username        String              @unique
+  showMilestones  Boolean             @default(true)
+  createdAt       DateTime            @default(now())
+  conversations   Conversation[]
+  relationStates  RelationshipState[]
+  memories        Memory[]
 }
 
 model Agent {
