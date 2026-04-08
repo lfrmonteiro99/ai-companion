@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id             String              @id @default(uuid())
+  username       String              @unique
+  createdAt      DateTime            @default(now())
+  conversations  Conversation[]
+  relationStates RelationshipState[]
+  memories       Memory[]
+}
+
+model Agent {
+  id             String              @id
+  name           String
+  shortBio       String
+  archetype      String
+  voiceStyle     String
+  config         Json
+  createdAt      DateTime            @default(now())
+  conversations  Conversation[]
+  relationStates RelationshipState[]
+  memories       Memory[]
+}
+
+model Conversation {
+  id        String    @id @default(uuid())
+  userId    String
+  agentId   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id])
+  agent     Agent     @relation(fields: [agentId], references: [id])
+  messages  Message[]
+
+  @@unique([userId, agentId])
+}
+
+model Message {
+  id                 String       @id @default(uuid())
+  conversationId     String
+  senderRole         String
+  content            String
+  toneClassification String?
+  responseMetadata   Json?
+  createdAt          DateTime     @default(now())
+  conversation       Conversation @relation(fields: [conversationId], references: [id])
+
+  @@index([conversationId, createdAt])
+}
+
+model RelationshipState {
+  id                String   @id @default(uuid())
+  userId            String
+  agentId           String
+  interest          Int      @default(30)
+  trust             Int      @default(20)
+  comfort           Int      @default(20)
+  tension           Int      @default(30)
+  respect           Int      @default(30)
+  attachment        Int      @default(10)
+  emotionalOpenness Int      @default(15)
+  conversationDepth Int      @default(10)
+  initiativeBalance String   @default("user_leads")
+  dynamicAlignment  Int      @default(30)
+  stage             Int      @default(0)
+  currentMood       String   @default("receptive")
+  lastInteractionAt DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id])
+  agent             Agent    @relation(fields: [agentId], references: [id])
+
+  @@unique([userId, agentId])
+}
+
+model Memory {
+  id              String   @id @default(uuid())
+  userId          String
+  agentId         String
+  type            String
+  content         String
+  salience        Float
+  confidence      Float
+  emotionalWeight Float
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id])
+  agent           Agent    @relation(fields: [agentId], references: [id])
+
+  @@index([userId, agentId, type])
+}
+
+model Milestone {
+  id        String   @id @default(uuid())
+  userId    String
+  agentId   String
+  type      String
+  label     String
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, agentId])
+}
