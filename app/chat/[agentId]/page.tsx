@@ -48,6 +48,7 @@ export default async function ChatPage({
       userId={user.id}
       initialMessages={initialMessages}
       conversationId={conversation?.id || null}
+      showMilestones={user.showMilestones}
     />
   );
 }
