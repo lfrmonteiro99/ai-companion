@@ -4,6 +4,8 @@ import { generateChatResponse, ChatMessage } from "./llm";
 import { buildSystemPrompt } from "./prompt-builder";
 import { getOrCreateState, computeStateDelta, applyDelta } from "./relationship";
 import { checkStageProgression } from "./stage";
+import { retrieveMemories, extractMemories } from "./memory";
+import { updateMood } from "./mood";
 
 export interface SendMessageParams {
   userId: string;
@@ -33,8 +35,9 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
     create: { userId, agentId },
   });
 
-  // 2. Get or create relationship state
+  // 2. Get relationship state + update mood
   const state = await getOrCreateState(userId, agentId);
+  const mood = await updateMood(userId, agentId, agent);
 
   // 3. Store user message
   await prisma.message.create({
@@ -45,31 +48,32 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
     },
   });
 
-  // 4. Load recent messages for context
-  const recentMessages = await prisma.message.findMany({
-    where: { conversationId: conversation.id },
-    orderBy: { createdAt: "asc" },
-    take: 20,
-  });
+  // 4. Load context in parallel: recent messages + memories
+  const [recentMessages, memories] = await Promise.all([
+    prisma.message.findMany({
+      where: { conversationId: conversation.id },
+      orderBy: { createdAt: "asc" },
+      take: 20,
+    }),
+    retrieveMemories(userId, agentId, agent),
+  ]);
 
   const chatHistory: ChatMessage[] = recentMessages.map((msg) => ({
     role: msg.senderRole as "user" | "assistant",
     content: msg.content,
   }));
 
-  // 5. Load memories (Phase 3 — empty for now)
-  const memories: { type: string; content: string }[] = [];
+  // 5. Build 4-layer system prompt with state + memories
+  const stateWithMood = { ...state, currentMood: mood };
+  const systemPrompt = buildSystemPrompt(agent, stateWithMood, memories);
 
-  // 6. Build 4-layer system prompt
-  const systemPrompt = buildSystemPrompt(agent, state, memories);
-
-  // 7. Generate reply via OpenAI
+  // 6. Generate reply via OpenAI
   const reply = await generateChatResponse({
     systemPrompt,
     messages: chatHistory,
   });
 
-  // 8. Store assistant message
+  // 7. Store assistant message
   await prisma.message.create({
     data: {
       conversationId: conversation.id,
@@ -78,17 +82,24 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
     },
   });
 
-  // 9. Compute and apply relationship state deltas (async, non-blocking)
-  computeStateDelta(message, reply, agent, state)
-    .then((delta) => applyDelta(userId, agentId, delta))
-    .then(() => checkStageProgression(userId, agentId, agent))
-    .catch((err) => console.error("State update error:", err));
+  // 8. Background tasks: state deltas, stage check, memory extraction
+  const messageCount = recentMessages.length;
+  const allMessages = [...recentMessages.map((m) => ({ senderRole: m.senderRole, content: m.content })), { senderRole: "assistant", content: reply }];
 
-  // 10. Return response
+  Promise.all([
+    // Compute and apply relationship state deltas
+    computeStateDelta(message, reply, agent, state)
+      .then((delta) => applyDelta(userId, agentId, delta))
+      .then(() => checkStageProgression(userId, agentId, agent)),
+    // Extract memories every 3 turns
+    messageCount % 6 === 0 ? extractMemories(userId, agentId, allMessages, agent) : Promise.resolve(0),
+  ]).catch((err) => console.error("Background task error:", err));
+
+  // 9. Return response
   return {
     reply,
     conversationId: conversation.id,
     stage: state.stage,
-    mood: state.currentMood,
+    mood,
   };
 }
