@@ -43,7 +43,15 @@ const agents = [
   },
 ];
 
+export async function GET() {
+  return handleSetup();
+}
+
 export async function POST() {
+  return handleSetup();
+}
+
+async function handleSetup() {
   const results: string[] = [];
 
   // Step 1: Run migrations
