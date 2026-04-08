@@ -28,3 +28,19 @@ export async function generateChatResponse(params: {
 
   return response.choices[0]?.message?.content || "";
 }
+
+export async function generateStructuredOutput(prompt: string): Promise<Record<string, number>> {
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: "You are a JSON-only analysis engine. Return ONLY valid JSON, no markdown, no explanation." },
+      { role: "user", content: prompt },
+    ],
+    temperature: 0.3,
+    max_tokens: 200,
+    response_format: { type: "json_object" },
+  });
+
+  const content = response.choices[0]?.message?.content || "{}";
+  return JSON.parse(content);
+}
