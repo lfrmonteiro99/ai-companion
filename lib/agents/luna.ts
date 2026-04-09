@@ -40,6 +40,7 @@ export const luna: AgentConfig = {
     "I've been thinking about you. How are you, really?",
     "Come sit with me for a bit. I'd love to talk.",
   ],
+  openerChance: 0.75,
   relationshipRules: {
     testsBeforeReward: false,
     withdrawsIfUserIsGeneric: false,

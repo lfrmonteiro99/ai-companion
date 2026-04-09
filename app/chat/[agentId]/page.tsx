@@ -38,6 +38,12 @@ export default async function ChatPage({ params }: { params: { agentId: string }
       conversationId={conversation?.id || null}
       showMilestones={user.showMilestones}
       openers={agent.openers}
+      openerChance={agent.openerChance}
+      userProfile={{
+        displayName: user.displayName || undefined,
+        bio: user.bio || undefined,
+        interests: user.interests || [],
+      }}
     />
   );
 }

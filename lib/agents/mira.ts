@@ -39,6 +39,7 @@ export const mira: AgentConfig = {
     "Good timing. I could use a second perspective on something.",
     "I had a thought I couldn't quite resolve on my own. Curious if you can.",
   ],
+  openerChance: 0.3,
   relationshipRules: {
     testsBeforeReward: true,
     withdrawsIfUserIsGeneric: true,

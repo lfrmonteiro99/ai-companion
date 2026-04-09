@@ -60,6 +60,7 @@ export interface AgentConfig {
   emotionalStyle: string;
   speechPatterns: string[];
   openers: string[];
+  openerChance: number; // 0-1: probability agent initiates first in a new chat
   relationshipRules: RelationshipRules;
   memoryBias: string[];
   stageBehaviorRules: Record<number, StageBehaviorRule>;

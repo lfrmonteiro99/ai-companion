@@ -4,6 +4,7 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { getOrCreateUser } from "@/lib/services/auth";
 import { getAllAgents } from "@/lib/agents";
 import DeleteAccountButton from "@/app/components/DeleteAccountButton";
+import ProfileEditor from "@/app/components/ProfileEditor";
 
 const STAGE_NAMES: Record<number, string> = {
   0: "Stranger",
@@ -78,6 +79,14 @@ export default async function ProfilePage() {
           </p>
         </div>
       </div>
+
+      {/* Profile Editor */}
+      <ProfileEditor
+        userId={user.id}
+        initialDisplayName={user.displayName || ""}
+        initialBio={user.bio || ""}
+        initialInterests={user.interests || []}
+      />
 
       {/* Stats Overview */}
       <section className="mb-8">

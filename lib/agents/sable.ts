@@ -39,6 +39,7 @@ export const sable: AgentConfig = {
     "I don't usually start conversations. Consider this rare.",
     "There's something behind your eyes. Don't tell me what it is yet.",
   ],
+  openerChance: 0.15,
   relationshipRules: {
     testsBeforeReward: true,
     withdrawsIfUserIsGeneric: true,
