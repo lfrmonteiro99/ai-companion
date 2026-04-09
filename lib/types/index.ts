@@ -49,6 +49,8 @@ export interface AgentConfig {
   voiceStyle: string;
   avatar: string;
   galleryImages: string[];
+  personaVoice: string;           // first-person voice anchor, 3-5 lines max
+  opinionsAndFlaws: string[];     // behavioral reactions, not trait labels
   coreTraits: CoreTraits;
   interactionPreferences: string[];
   dislikes: string[];
