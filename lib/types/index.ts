@@ -59,6 +59,8 @@ export interface AgentConfig {
   humorProfile: string;
   emotionalStyle: string;
   speechPatterns: string[];
+  exampleMessages: string[];    // examples of how this agent actually texts
+  forbiddenPatterns: string[];  // things this agent would NEVER say
   openers: string[];
   openerChance: number; // 0-1: probability agent initiates first in a new chat
   relationshipRules: RelationshipRules;
