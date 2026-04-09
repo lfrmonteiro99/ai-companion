@@ -43,6 +43,8 @@ export interface AgentConfig {
   id: string;
   name: string;
   shortBio: string;
+  backstory: string;
+  vibeTags: string[];
   archetype: string;
   voiceStyle: string;
   coreTraits: CoreTraits;
