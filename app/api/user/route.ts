@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function DELETE(req: NextRequest) {
   const { searchParams } = req.nextUrl;
@@ -11,7 +11,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   // Verify the request is from the authenticated user
-  const supabase = await createClient();
+  const supabase = createServerSupabaseClient();
   const { data: { user: authUser } } = await supabase.auth.getUser();
   if (!authUser) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
