@@ -39,6 +39,21 @@ export default function ChatWindow({
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, streamingContent]);
 
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  async function handleReset() {
+    await fetch("/api/conversations/reset", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, agentId }),
+    });
+    setMessages([]);
+    setConvId(null);
+    setMilestones([]);
+    setStreamingContent("");
+    setShowResetConfirm(false);
+  }
+
   const toggleMilestones = useCallback(async () => {
     const v = !showMilestones;
     setShowMilestones(v);
@@ -87,8 +102,26 @@ export default function ChatWindow({
       <div className="flex h-[calc(100vh-73px)] flex-col">
         <div className="flex items-center justify-between border-b px-4 py-2" style={{ borderColor: "var(--border-color)" }}>
           <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>{agentName}</span>
-          <button onClick={() => setSettingsOpen(true)} className="text-xs hover:opacity-70" style={{ color: "var(--text-muted)" }}>Settings</button>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setShowResetConfirm(true)} className="text-xs hover:opacity-70" style={{ color: "var(--text-muted)" }}>Reset</button>
+            <button onClick={() => setSettingsOpen(true)} className="text-xs hover:opacity-70" style={{ color: "var(--text-muted)" }}>Settings</button>
+          </div>
         </div>
+
+        {showResetConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="mx-4 w-full max-w-sm rounded-xl p-6 shadow-xl" style={{ backgroundColor: "var(--bg-primary)" }}>
+              <h3 className="mb-2 text-lg font-semibold" style={{ color: "var(--text-primary)" }}>Reset conversation?</h3>
+              <p className="mb-5 text-sm" style={{ color: "var(--text-muted)" }}>
+                This will erase all messages, memories, milestones, and relationship progress with {agentName}. This cannot be undone.
+              </p>
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setShowResetConfirm(false)} className="rounded-lg px-4 py-2 text-sm" style={{ color: "var(--text-secondary)" }}>Cancel</button>
+                <button onClick={handleReset} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500">Reset</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {milestones.length > 0 && showMilestones && (
           <div className="space-y-1 px-4 py-2">
