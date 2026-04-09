@@ -49,6 +49,8 @@ export interface AgentConfig {
   voiceStyle: string;
   avatar: string;
   galleryImages: string[];
+  personaVoice: string;
+  opinionsAndFlaws: string[];
   coreTraits: CoreTraits;
   interactionPreferences: string[];
   dislikes: string[];
@@ -59,6 +61,8 @@ export interface AgentConfig {
   humorProfile: string;
   emotionalStyle: string;
   speechPatterns: string[];
+  exampleMessages: string[];
+  forbiddenPatterns: string[];
   openers: string[];
   openerChance: number; // 0-1: probability agent initiates first in a new chat
   relationshipRules: RelationshipRules;
