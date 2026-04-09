@@ -48,14 +48,17 @@ export async function POST(req: NextRequest) {
     data: { conversationId: conversation.id, senderRole: "user", content: message },
   });
 
-  const [recentMessages, memories] = await Promise.all([
+  const [recentMessagesDesc, memories] = await Promise.all([
     prisma.message.findMany({
       where: { conversationId: conversation.id },
-      orderBy: { createdAt: "asc" },
-      take: 20,
+      orderBy: { createdAt: "desc" },
+      take: 30,
     }),
     retrieveMemories(userId, agentId, agent),
   ]);
+
+  // Reverse so messages are in chronological order for the LLM
+  const recentMessages = recentMessagesDesc.reverse();
 
   const chatHistory = recentMessages.map((msg) => ({
     role: msg.senderRole as "user" | "assistant",
