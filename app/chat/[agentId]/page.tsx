@@ -51,8 +51,8 @@ export default async function ChatPage({ params, searchParams }: ChatPageProps) 
     }
   } else {
     // Practice mode: one conversation per user-agent pair
-    conversation = await prisma.conversation.findUnique({
-      where: { userId_agentId: { userId: user.id, agentId: agent.id } },
+    conversation = await prisma.conversation.findFirst({
+      where: { userId: user.id, agentId: agent.id, mode: "practice" },
     });
   }
 

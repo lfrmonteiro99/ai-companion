@@ -90,11 +90,12 @@ export async function generateInitiativeMessage(
 
   if (!message) return null;
 
-  // Store in conversation
-  const conversation = await prisma.conversation.upsert({
-    where: { userId_agentId: { userId, agentId } },
-    update: { updatedAt: new Date() },
-    create: { userId, agentId },
+  // Store in practice conversation
+  const existing = await prisma.conversation.findFirst({
+    where: { userId, agentId, mode: "practice" },
+  });
+  const conversation = existing || await prisma.conversation.create({
+    data: { userId, agentId, mode: "practice" },
   });
 
   await prisma.message.create({

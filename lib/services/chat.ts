@@ -35,26 +35,27 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
 
   // 1. Find or create conversation
   let conversation;
-  if (mode === "scenario" || mode === "challenge") {
-    // Scenario/challenge: create a new conversation linked to scenario
-    if (scenarioId) {
-      conversation = await prisma.conversation.create({
-        data: { userId, agentId, mode, scenarioId },
-      });
-    } else {
-      conversation = await prisma.conversation.upsert({
-        where: { userId_agentId: { userId, agentId } },
-        update: { updatedAt: new Date() },
-        create: { userId, agentId, mode },
-      });
-    }
+  if ((mode === "scenario" || mode === "challenge") && scenarioId) {
+    // Scenario/challenge: find existing for this attempt or create new
+    const existing = await prisma.conversation.findFirst({
+      where: { userId, agentId, mode, scenarioId },
+      orderBy: { createdAt: "desc" },
+    });
+    conversation = existing || await prisma.conversation.create({
+      data: { userId, agentId, mode, scenarioId },
+    });
   } else {
     // Practice mode: one conversation per user-agent pair
-    conversation = await prisma.conversation.upsert({
-      where: { userId_agentId: { userId, agentId } },
-      update: { updatedAt: new Date() },
-      create: { userId, agentId, mode: "practice" },
+    const existing = await prisma.conversation.findFirst({
+      where: { userId, agentId, mode: "practice" },
     });
+    conversation = existing || await prisma.conversation.create({
+      data: { userId, agentId, mode: "practice" },
+    });
+    // Update timestamp
+    if (existing) {
+      await prisma.conversation.update({ where: { id: existing.id }, data: { updatedAt: new Date() } });
+    }
   }
 
   // 2. Get relationship state + update mood

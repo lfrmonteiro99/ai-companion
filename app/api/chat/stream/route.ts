@@ -63,11 +63,17 @@ export async function POST(req: NextRequest) {
       data: { userId, agentId, mode, scenarioId },
     });
   } else {
-    conversation = await prisma.conversation.upsert({
-      where: { userId_agentId: { userId, agentId } },
-      update: { updatedAt: new Date() },
-      create: { userId, agentId, mode: "practice" },
+    const existingConv = await prisma.conversation.findFirst({
+      where: { userId, agentId, mode: "practice" },
     });
+    if (existingConv) {
+      conversation = existingConv;
+      await prisma.conversation.update({ where: { id: existingConv.id }, data: { updatedAt: new Date() } });
+    } else {
+      conversation = await prisma.conversation.create({
+        data: { userId, agentId, mode: "practice" },
+      });
+    }
   }
 
   const state = await getOrCreateState(userId, agentId);

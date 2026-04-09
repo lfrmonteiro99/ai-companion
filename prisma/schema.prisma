@@ -57,7 +57,9 @@ model Conversation {
   scenario   Scenario?  @relation(fields: [scenarioId], references: [id])
   messages   Message[]
 
-  @@unique([userId, agentId])
+  // Practice mode uses findFirst with mode filter; scenario mode creates new conversations per attempt
+  @@index([userId, agentId, mode])
+  @@index([userId, agentId, mode, scenarioId])
 }
 
 model Message {

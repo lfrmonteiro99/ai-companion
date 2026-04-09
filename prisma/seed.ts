@@ -75,6 +75,16 @@ async function main() {
     console.log(`Upserted agent: ${agent.name}`);
   }
 
+  // Seed scenarios
+  console.log("Seeding scenarios...");
+  const { seedScenarios } = await import("./seeds/scenarios");
+  await seedScenarios(prisma);
+
+  // Seed challenges
+  console.log("Seeding challenges...");
+  const { seedChallenges } = await import("./seeds/challenges");
+  await seedChallenges(prisma);
+
   console.log("Seeding complete.");
 }
 
