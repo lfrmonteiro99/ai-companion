@@ -6,6 +6,7 @@ import { RotateCcw, Settings as SettingsIcon, X, Send, ArrowLeft } from "lucide-
 import Image from "next/image";
 import MessageBubble from "./MessageBubble";
 import SettingsDrawer from "./SettingsDrawer";
+import ScenarioComplete from "./ScenarioComplete";
 
 interface Message {
   id: string;
@@ -74,11 +75,48 @@ export default function ChatWindow({
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [hasMore, setHasMore] = useState(initialMessages.length >= 50);
   const [scenarioEnding, setScenarioEnding] = useState(false);
+  const [scenarioResult, setScenarioResult] = useState<{
+    success: boolean; overallScore: number; xpEarned: number;
+    leveledUp: boolean; newLevel?: number; achievements: { id: string; label: string; icon: string }[];
+  } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const isScenario = mode === "scenario" || mode === "challenge";
   const userMessageCount = messages.filter((m) => m.senderRole === "user").length;
+  const maxReached = isScenario && scenarioData?.maxMessages && userMessageCount >= scenarioData.maxMessages;
+
+  // Auto-complete scenario when max messages reached
+  useEffect(() => {
+    if (maxReached && !scenarioEnding && !scenarioResult && attemptId) {
+      handleScenarioEnd();
+    }
+  }, [maxReached]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleScenarioEnd() {
+    if (!attemptId || scenarioEnding) return;
+    setScenarioEnding(true);
+    try {
+      const res = await fetch("/api/scenarios/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ attemptId }),
+      });
+      const data = await res.json();
+      if (data.feedback) {
+        setScenarioResult({
+          success: data.feedback.overallScore >= 50,
+          overallScore: data.feedback.overallScore,
+          xpEarned: data.xp?.newXP ?? 25,
+          leveledUp: data.leveledUp ?? false,
+          newLevel: data.newLevel,
+          achievements: data.achievements ?? [],
+        });
+      }
+    } catch {
+      setScenarioEnding(false);
+    }
+  }
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, streamingContent, showTyping]);
 
@@ -139,7 +177,7 @@ export default function ChatWindow({
 
   async function handleSend() {
     const text = input.trim();
-    if (!text || sending) return;
+    if (!text || sending || maxReached) return;
     setMessages((p) => [...p, { id: `u-${Date.now()}`, senderRole: "user", content: text, createdAt: new Date().toISOString() }]);
     setInput(""); setSending(true); setStreamingContent("");
     const typingDelay = 800 + Math.random() * 1200;
@@ -311,25 +349,11 @@ export default function ChatWindow({
                 </span>
               )}
               <button
-                onClick={async () => {
-                  if (!attemptId) return;
-                  setScenarioEnding(true);
-                  try {
-                    const res = await fetch("/api/scenarios/complete", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ attemptId }),
-                    });
-                    const data = await res.json();
-                    if (data.feedback) {
-                      window.location.href = `/analysis/${convId || ""}`;
-                    }
-                  } catch { setScenarioEnding(false); }
-                }}
+                onClick={handleScenarioEnd}
                 disabled={scenarioEnding}
                 className="rounded-lg px-2.5 py-1 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/10 disabled:opacity-50"
               >
-                {scenarioEnding ? "A terminar..." : "Terminar"}
+                {scenarioEnding ? "A analisar..." : "Terminar"}
               </button>
             </div>
           </div>
@@ -467,13 +491,13 @@ export default function ChatWindow({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-              placeholder={`Message ${agentName}...`}
-              disabled={sending}
+              placeholder={maxReached ? "Limite de mensagens atingido" : `Message ${agentName}...`}
+              disabled={sending || !!maxReached}
               className="flex-1 rounded-xl border border-base-500/50 bg-base-700/60 backdrop-blur-sm px-4 py-2.5 text-sm text-base-100 placeholder:text-base-400 transition-all duration-200 focus:outline-none focus:border-[var(--agent-accent)]/60 focus:shadow-[0_0_0_3px_var(--agent-glow)] disabled:opacity-50"
             />
             <button
               onClick={handleSend}
-              disabled={sending || !input.trim()}
+              disabled={sending || !input.trim() || !!maxReached}
               className="rounded-xl bg-[var(--agent-accent)] px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_16px_var(--agent-glow)] disabled:opacity-40 disabled:shadow-none"
             >
               <Send size={18} />
@@ -481,6 +505,21 @@ export default function ChatWindow({
           </div>
         </div>
       </div>
+
+      {/* Scenario completion overlay */}
+      {scenarioResult && (
+        <ScenarioComplete
+          success={scenarioResult.success}
+          overallScore={scenarioResult.overallScore}
+          xpEarned={scenarioResult.xpEarned}
+          leveledUp={scenarioResult.leveledUp}
+          newLevel={scenarioResult.newLevel}
+          achievements={scenarioResult.achievements}
+          onViewAnalysis={() => { window.location.href = `/analysis/${convId || ""}`; }}
+          onRetry={() => { window.location.href = `/scenarios/${scenarioData?.id || ""}`; }}
+          onNext={() => { window.location.href = "/scenarios"; }}
+        />
+      )}
     </>
   );
 }
