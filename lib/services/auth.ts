@@ -3,18 +3,15 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 /**
  * Ensures a User row exists in our DB for the authenticated Supabase user.
- * Creates one on first login, returns existing on subsequent calls.
+ * Uses upsert to handle race conditions and existing users cleanly.
  */
 export async function getOrCreateUser(supabaseUser: SupabaseUser) {
-  // Check by authId first
-  const existing = await prisma.user.findUnique({
+  return prisma.user.upsert({
     where: { authId: supabaseUser.id },
-  });
-  if (existing) return existing;
-
-  // Create new user linked to Supabase Auth
-  return prisma.user.create({
-    data: {
+    update: {
+      email: supabaseUser.email,
+    },
+    create: {
       authId: supabaseUser.id,
       email: supabaseUser.email,
       displayName: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || null,
