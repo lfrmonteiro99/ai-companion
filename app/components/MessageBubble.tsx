@@ -12,14 +12,14 @@ export default function MessageBubble({ role, content, agentName }: MessageBubbl
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-          isUser
-            ? "bg-blue-600 text-white"
-            : "bg-gray-800 text-gray-200"
-        }`}
+        className="max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
+        style={{
+          backgroundColor: isUser ? "var(--bubble-user)" : "var(--bubble-agent)",
+          color: isUser ? "#ffffff" : "var(--bubble-agent-text)",
+        }}
       >
         {!isUser && agentName && (
-          <div className="mb-1 text-xs font-medium text-gray-400">{agentName}</div>
+          <div className="mb-1 text-xs font-medium" style={{ color: "var(--text-muted)" }}>{agentName}</div>
         )}
         <div className="whitespace-pre-wrap">{content}</div>
       </div>
