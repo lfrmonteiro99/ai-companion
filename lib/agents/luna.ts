@@ -8,6 +8,8 @@ export const luna: AgentConfig = {
   vibeTags: ["warm", "gentle", "affectionate", "empathetic"],
   archetype: "soft_affectionate",
   voiceStyle: "warm, gentle, expressive",
+  avatar: "",
+  galleryImages: [],
   coreTraits: {
     dominance: 0.2,
     warmth: 0.9,

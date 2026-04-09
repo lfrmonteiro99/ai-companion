@@ -47,6 +47,8 @@ export interface AgentConfig {
   vibeTags: string[];
   archetype: string;
   voiceStyle: string;
+  avatar: string;
+  galleryImages: string[];
   coreTraits: CoreTraits;
   interactionPreferences: string[];
   dislikes: string[];

@@ -58,9 +58,13 @@ export default async function AgentProfilePage({ params }: { params: { agentId: 
     <div className="mx-auto max-w-2xl px-6 py-10">
       {/* Hero */}
       <div className="mb-8 flex items-start gap-5">
-        <div className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-full text-3xl font-bold ${avatarClass}`}>
-          {agent.name[0]}
-        </div>
+        {agent.avatar ? (
+          <img src={agent.avatar} alt={agent.name} className="h-20 w-20 shrink-0 rounded-full object-cover" />
+        ) : (
+          <div className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-full text-3xl font-bold ${avatarClass}`}>
+            {agent.name[0]}
+          </div>
+        )}
         <div>
           <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>{agent.name}</h1>
           <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${colorClass}`}>
@@ -76,6 +80,17 @@ export default async function AgentProfilePage({ params }: { params: { agentId: 
           </div>
         </div>
       </div>
+
+      {/* Photo Gallery */}
+      {agent.galleryImages.length > 0 && (
+        <section className="mb-8">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {agent.galleryImages.map((img, i) => (
+              <img key={i} src={img} alt={`${agent.name} ${i + 1}`} className="aspect-square w-full rounded-lg object-cover" />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Backstory */}
       <section className="mb-8">
