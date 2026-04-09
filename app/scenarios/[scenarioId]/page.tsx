@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useState, useEffect, use } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import ScenarioBriefing from "@/app/components/ScenarioBriefing";
 
@@ -47,7 +47,8 @@ const AGENTS: AgentOption[] = [
   { id: "kira", name: "Kira", archetype: "playful_chaotic" },
 ];
 
-function BriefingContent({ scenarioId }: { scenarioId: string }) {
+function BriefingContent() {
+  const { scenarioId } = useParams<{ scenarioId: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
   const preselectedAgentId = searchParams.get("agentId");
@@ -147,9 +148,7 @@ function BriefingContent({ scenarioId }: { scenarioId: string }) {
   );
 }
 
-export default function ScenarioBriefingPage({ params }: { params: Promise<{ scenarioId: string }> }) {
-  const { scenarioId } = use(params);
-
+export default function ScenarioBriefingPage() {
   return (
     <div className="relative min-h-[calc(100vh-73px)] overflow-hidden">
       <div className="pointer-events-none absolute inset-0">
@@ -162,7 +161,7 @@ export default function ScenarioBriefingPage({ params }: { params: Promise<{ sce
             <Loader2 size={24} className="animate-spin text-base-400" />
           </div>
         }>
-          <BriefingContent scenarioId={scenarioId} />
+          <BriefingContent />
         </Suspense>
       </div>
     </div>
