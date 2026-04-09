@@ -3,14 +3,24 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import SettingsDrawer from "./SettingsDrawer";
+import NotificationBell from "./NotificationBell";
 
 export default function Header() {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [user, setUser] = useState<{ email?: string } | null>(null);
+  const [user, setUser] = useState<{ email?: string; id?: string } | null>(null);
+  const [dbUserId, setDbUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUser(data.user);
+        // Fetch DB user ID
+        fetch(`/api/settings?authId=${data.user.id}`).then((r) => r.json()).then((d) => {
+          if (d.userId) setDbUserId(d.userId);
+        }).catch(() => {});
+      }
+    });
   }, []);
 
   async function handleLogout() {
@@ -23,10 +33,11 @@ export default function Header() {
     <>
       <header className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: "var(--border-color)", backgroundColor: "var(--bg-primary)" }}>
         <a href="/" className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>AI Companion</a>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {user ? (
             <>
-              <span className="text-xs" style={{ color: "var(--text-muted)" }}>{user.email}</span>
+              <span className="hidden text-xs sm:inline" style={{ color: "var(--text-muted)" }}>{user.email}</span>
+              <NotificationBell userId={dbUserId} />
               <button onClick={handleLogout} className="text-xs text-red-500 hover:text-red-400">Logout</button>
             </>
           ) : (

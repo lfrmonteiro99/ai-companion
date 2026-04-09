@@ -9,17 +9,21 @@ datasource db {
 }
 
 model User {
-  id              String              @id @default(uuid())
-  authId          String?             @unique
-  email           String?             @unique
-  username        String?             @unique
-  displayName     String?
-  avatarUrl       String?
-  showMilestones  Boolean             @default(true)
-  createdAt       DateTime            @default(now())
-  conversations   Conversation[]
-  relationStates  RelationshipState[]
-  memories        Memory[]
+  id                String              @id @default(uuid())
+  authId            String?             @unique
+  email             String?             @unique
+  username          String?             @unique
+  displayName       String?
+  avatarUrl         String?
+  showMilestones    Boolean             @default(true)
+  enableInitiative  Boolean             @default(true)
+  quietHoursStart   String              @default("23:00")
+  quietHoursEnd     String              @default("08:00")
+  createdAt         DateTime            @default(now())
+  conversations     Conversation[]
+  relationStates    RelationshipState[]
+  memories          Memory[]
+  notifications     Notification[]
 }
 
 model Agent {
@@ -110,4 +114,18 @@ model Milestone {
   createdAt DateTime @default(now())
 
   @@index([userId, agentId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  agentId   String
+  type      String
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, read, createdAt])
 }
