@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import MessageBubble from "./MessageBubble";
 import SettingsDrawer from "./SettingsDrawer";
 
@@ -35,23 +36,28 @@ export default function ChatWindow({
   const [milestones, setMilestones] = useState<MilestoneEvent[]>([]);
   const [showMilestones, setShowMilestones] = useState(initialShowMilestones);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, streamingContent]);
 
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
-
   async function handleReset() {
-    await fetch("/api/conversations/reset", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, agentId }),
-    });
-    setMessages([]);
-    setConvId(null);
-    setMilestones([]);
-    setStreamingContent("");
-    setShowResetConfirm(false);
+    setResetting(true);
+    try {
+      await fetch("/api/conversations/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, agentId }),
+      });
+      setMessages([]);
+      setConvId(null);
+      setMilestones([]);
+      setStreamingContent("");
+      setShowResetConfirm(false);
+    } finally {
+      setResetting(false);
+    }
   }
 
   const toggleMilestones = useCallback(async () => {
@@ -108,41 +114,124 @@ export default function ChatWindow({
           </div>
         </div>
 
-        {showResetConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="mx-4 w-full max-w-sm rounded-xl p-6 shadow-xl" style={{ backgroundColor: "var(--bg-primary)" }}>
-              <h3 className="mb-2 text-lg font-semibold" style={{ color: "var(--text-primary)" }}>Reset conversation?</h3>
-              <p className="mb-5 text-sm" style={{ color: "var(--text-muted)" }}>
-                This will erase all messages, memories, milestones, and relationship progress with {agentName}. This cannot be undone.
-              </p>
-              <div className="flex justify-end gap-2">
-                <button onClick={() => setShowResetConfirm(false)} className="rounded-lg px-4 py-2 text-sm" style={{ color: "var(--text-secondary)" }}>Cancel</button>
-                <button onClick={handleReset} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500">Reset</button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Reset confirmation modal */}
+        <AnimatePresence>
+          {showResetConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ duration: 0.2 }}
+                className="mx-4 w-full max-w-sm rounded-xl p-6 shadow-xl"
+                style={{ backgroundColor: "var(--bg-primary)" }}
+              >
+                <h3 className="mb-2 text-lg font-semibold" style={{ color: "var(--text-primary)" }}>Reset conversation?</h3>
+                <p className="mb-5 text-sm" style={{ color: "var(--text-muted)" }}>
+                  This will erase all messages, memories, milestones, and relationship progress with {agentName}. This cannot be undone.
+                </p>
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setShowResetConfirm(false)}
+                    disabled={resetting}
+                    className="rounded-lg px-4 py-2 text-sm disabled:opacity-50"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleReset}
+                    disabled={resetting}
+                    className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-70"
+                  >
+                    {resetting ? (
+                      <>
+                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Resetting...
+                      </>
+                    ) : (
+                      "Reset"
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {milestones.length > 0 && showMilestones && (
-          <div className="space-y-1 px-4 py-2">
-            {milestones.map((m, i) => (
-              <div key={`${m.type}-${i}`} className="flex items-center justify-between rounded-lg bg-purple-100 px-3 py-2 text-sm text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
-                <span>{m.label}</span>
-                <button onClick={() => setMilestones((p) => p.filter((_, j) => j !== i))} className="ml-2 text-purple-400 hover:text-purple-600 dark:hover:text-purple-200">x</button>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Milestone notifications */}
+        <AnimatePresence>
+          {milestones.length > 0 && showMilestones && (
+            <div className="space-y-1 px-4 py-2">
+              {milestones.map((m, i) => (
+                <motion.div
+                  key={`${m.type}-${i}`}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex items-center justify-between rounded-lg bg-purple-100 px-3 py-2 text-sm text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                >
+                  <span>{m.label}</span>
+                  <button onClick={() => setMilestones((p) => p.filter((_, j) => j !== i))} className="ml-2 text-purple-400 hover:text-purple-600 dark:hover:text-purple-200">x</button>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </AnimatePresence>
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
           <div className="mx-auto max-w-2xl space-y-3">
-            {messages.length === 0 && <div className="py-20 text-center" style={{ color: "var(--text-muted)" }}>Start a conversation with {agentName}</div>}
-            {messages.map((msg) => <MessageBubble key={msg.id} role={msg.senderRole} content={msg.content} agentName={msg.senderRole === "assistant" ? agentName : undefined} />)}
-            {streamingContent && <MessageBubble role="assistant" content={streamingContent} agentName={agentName} />}
+            {messages.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="py-20 text-center"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Start a conversation with {agentName}
+              </motion.div>
+            )}
+            <AnimatePresence initial={false}>
+              {messages.map((msg) => (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <MessageBubble role={msg.senderRole} content={msg.content} agentName={msg.senderRole === "assistant" ? agentName : undefined} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {streamingContent && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <MessageBubble role="assistant" content={streamingContent} agentName={agentName} />
+              </motion.div>
+            )}
             {sending && !streamingContent && (
-              <div className="flex justify-start">
-                <div className="rounded-2xl px-4 py-2.5 text-sm" style={{ backgroundColor: "var(--bubble-agent)", color: "var(--text-muted)" }}>{agentName} is typing...</div>
-              </div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex justify-start"
+              >
+                <div className="flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm" style={{ backgroundColor: "var(--bubble-agent)", color: "var(--text-muted)" }}>
+                  <span className="flex gap-1">
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" style={{ animationDelay: "0ms" }} />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" style={{ animationDelay: "150ms" }} />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" style={{ animationDelay: "300ms" }} />
+                  </span>
+                  {agentName} is typing...
+                </div>
+              </motion.div>
             )}
             <div ref={bottomRef} />
           </div>
