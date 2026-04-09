@@ -50,7 +50,10 @@ export default function ChatWindow({
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [showTyping, setShowTyping] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [hasMore, setHasMore] = useState(initialMessages.length >= 50);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, streamingContent, showTyping]);
 
@@ -103,6 +106,34 @@ export default function ChatWindow({
       setShowResetConfirm(false);
     } finally {
       setResetting(false);
+    }
+  }
+
+  // Infinite scroll: load older messages when scrolling to top
+  async function loadOlderMessages() {
+    if (loadingOlder || !hasMore || !convId || messages.length === 0) return;
+    setLoadingOlder(true);
+    try {
+      const oldestId = messages[0].id;
+      const res = await fetch(`/api/conversations/${convId}/messages?before=${oldestId}&limit=50`);
+      const data = await res.json();
+      if (data.messages && data.messages.length > 0) {
+        // Preserve scroll position
+        const scrollEl = scrollRef.current;
+        const prevHeight = scrollEl?.scrollHeight || 0;
+        setMessages((prev) => [...data.messages, ...prev]);
+        setHasMore(data.hasMore);
+        // Restore scroll position after prepend
+        requestAnimationFrame(() => {
+          if (scrollEl) {
+            scrollEl.scrollTop = scrollEl.scrollHeight - prevHeight;
+          }
+        });
+      } else {
+        setHasMore(false);
+      }
+    } finally {
+      setLoadingOlder(false);
     }
   }
 
@@ -250,8 +281,25 @@ export default function ChatWindow({
           )}
         </AnimatePresence>
 
-        <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto px-4 py-4"
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            if (el.scrollTop < 80 && hasMore && !loadingOlder) {
+              loadOlderMessages();
+            }
+          }}
+        >
           <div className="mx-auto max-w-2xl space-y-3">
+            {loadingOlder && (
+              <div className="flex justify-center py-2">
+                <svg className="h-5 w-5 animate-spin" style={{ color: "var(--text-muted)" }} viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              </div>
+            )}
             {messages.length === 0 && !showTyping && (
               <motion.div
                 initial={{ opacity: 0 }}
