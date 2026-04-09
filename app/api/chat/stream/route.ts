@@ -19,6 +19,22 @@ const sendMessageSchema = z.object({
   message: z.string().min(1).max(2000),
 });
 
+/**
+ * Select model based on relationship stage.
+ * Stage 0-1: gpt-4o-mini (16x cheaper)
+ * Stage 2+:  gpt-4o (nuanced personality)
+ */
+function selectModel(stage: number): string {
+  if (stage <= 1) return "gpt-4o-mini";
+  return config.openaiModel;
+}
+
+function selectMaxTokens(stage: number): number {
+  if (stage <= 0) return 200;
+  if (stage <= 1) return 300;
+  return 400;
+}
+
 export async function POST(req: NextRequest) {
   let body;
   try {
@@ -48,16 +64,16 @@ export async function POST(req: NextRequest) {
     data: { conversationId: conversation.id, senderRole: "user", content: message },
   });
 
+  // Load last 15 messages (down from 30) + memories
   const [recentMessagesDesc, memories] = await Promise.all([
     prisma.message.findMany({
       where: { conversationId: conversation.id },
       orderBy: { createdAt: "desc" },
-      take: 30,
+      take: 15,
     }),
     retrieveMemories(userId, agentId, agent),
   ]);
 
-  // Reverse so messages are in chronological order for the LLM
   const recentMessages = recentMessagesDesc.reverse();
 
   const chatHistory = recentMessages.map((msg) => ({
@@ -68,6 +84,10 @@ export async function POST(req: NextRequest) {
   const stateWithMood = { ...state, currentMood: mood };
   const systemPrompt = buildSystemPrompt(agent, stateWithMood, memories, chatHistory);
 
+  // Model and token selection based on stage
+  const model = selectModel(state.stage);
+  const maxTokens = selectMaxTokens(state.stage);
+
   // Stream response via SSE
   const encoder = new TextEncoder();
   let fullReply = "";
@@ -76,13 +96,13 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       try {
         const completion = await openai.chat.completions.create({
-          model: config.openaiModel,
+          model,
           messages: [
             { role: "system", content: systemPrompt },
             ...chatHistory,
           ],
           temperature: 0.9,
-          max_tokens: 500,
+          max_tokens: maxTokens,
           frequency_penalty: 0.7,
           presence_penalty: 0.5,
           stream: true,
@@ -101,20 +121,28 @@ export async function POST(req: NextRequest) {
           data: { conversationId: conversation.id, senderRole: "assistant", content: fullReply },
         });
 
-        // Background: state + memory + milestones
+        // Background: state + memory + milestones (batched)
+        const messageCount = recentMessages.length;
         const allMessages = [...recentMessages.map((m) => ({ senderRole: m.senderRole, content: m.content })), { senderRole: "assistant", content: fullReply }];
 
-        const [, , milestones] = await Promise.all([
-          computeStateDelta(message, fullReply, agent, state)
-            .then((delta) => applyDelta(userId, agentId, delta))
-            .then(() => checkStageProgression(userId, agentId, agent)),
-          recentMessages.length % 6 === 0
+        const backgroundTasks: Promise<unknown>[] = [
+          // State deltas every 4 messages (was every message)
+          messageCount % 4 === 0
+            ? computeStateDelta(message, fullReply, agent, state)
+                .then((delta) => applyDelta(userId, agentId, delta))
+                .then(() => checkStageProgression(userId, agentId, agent))
+            : Promise.resolve(),
+          // Memory extraction every 10 messages (was every 6)
+          messageCount % 10 === 0
             ? extractMemories(userId, agentId, allMessages, agent)
             : Promise.resolve(0),
-          computeStateDelta(message, fullReply, agent, state)
-            .then(() => checkMilestones(userId, agentId, previousStage))
+          // Milestones check
+          checkMilestones(userId, agentId, previousStage)
             .catch(() => [] as { type: string; label: string }[]),
-        ]);
+        ];
+
+        const results = await Promise.all(backgroundTasks);
+        const milestones = results[2] || [];
 
         // Send done event with metadata
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({
@@ -122,7 +150,7 @@ export async function POST(req: NextRequest) {
           conversationId: conversation.id,
           stage: state.stage,
           mood,
-          milestones: milestones || [],
+          milestones,
         })}\n\n`));
 
         controller.close();

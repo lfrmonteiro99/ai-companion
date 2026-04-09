@@ -5,7 +5,7 @@ const STAGE_NAMES: Record<number, string> = {
   1: "Curious",
   2: "Engaged",
   3: "Invested",
-  4: "Intimate Dynamic Unlocked",
+  4: "Intimate",
 };
 
 interface RelationshipStateData {
@@ -21,6 +21,7 @@ interface RelationshipStateData {
   initiativeBalance: string;
   stage: number;
   currentMood: string;
+  lastInteractionAt?: Date;
 }
 
 interface MemoryItem {
@@ -33,133 +34,183 @@ interface MessageHistoryItem {
   content: string;
 }
 
+interface PromptContext {
+  agent: AgentConfig;
+  state?: RelationshipStateData | null;
+  memories?: MemoryItem[];
+  recentMessages?: MessageHistoryItem[];
+  detectedLanguage?: string;
+}
+
+/**
+ * Builds the system prompt. Layer A (identity) is kept at the TOP and static
+ * so OpenAI's automatic prompt caching (50% discount on repeated prefixes) applies.
+ */
 export function buildSystemPrompt(
   agent: AgentConfig,
   state?: RelationshipStateData | null,
   memories?: MemoryItem[],
   recentMessages?: MessageHistoryItem[],
 ): string {
+  // Detect language from user messages
+  const detectedLanguage = detectLanguage(recentMessages);
+
+  const ctx: PromptContext = { agent, state, memories, recentMessages, detectedLanguage };
+
+  // Layer A (static identity) FIRST — maximizes OpenAI prefix caching
   const layers = [
-    buildLayerA(agent),
-    state ? buildLayerB(agent, state) : "",
-    memories && memories.length > 0 ? buildLayerC(memories) : "",
-    state ? buildLayerD(agent, state) : "",
-    recentMessages && recentMessages.length > 0 ? buildLayerE(recentMessages) : "",
+    buildLayerA(ctx),
+    state ? buildLayerB(ctx) : "",
+    memories && memories.length > 0 ? buildLayerC(ctx) : "",
+    state ? buildLayerD(ctx) : "",
   ];
 
   return layers.filter(Boolean).join("\n\n---\n\n");
 }
 
-function buildLayerE(recentMessages: MessageHistoryItem[]): string {
-  const lastAssistantMessages = recentMessages
-    .filter((m) => m.role === "assistant")
-    .slice(-4)
-    .map((m, i) => `  [${i + 1}] "${m.content.slice(0, 120)}${m.content.length > 120 ? "..." : ""}"`);
+/**
+ * Detect user language from recent messages. Simple heuristic.
+ */
+function detectLanguage(messages?: MessageHistoryItem[]): string {
+  if (!messages || messages.length === 0) return "";
+  const userMsgs = messages.filter((m) => m.role === "user").slice(-3);
+  const text = userMsgs.map((m) => m.content).join(" ").toLowerCase();
 
-  if (lastAssistantMessages.length === 0) return "";
+  // Portuguese indicators
+  const ptWords = ["não", "sim", "que", "como", "tenho", "quero", "está", "isto", "esse", "isso", "também", "pode", "fazer", "diz", "obrigad", "olá", "bom dia", "boa noite"];
+  const ptCount = ptWords.filter((w) => text.includes(w)).length;
+  if (ptCount >= 2) return "Portuguese";
 
-  return `Your last ${lastAssistantMessages.length} responses (DO NOT repeat these phrasings, structures, or opening words):\n${lastAssistantMessages.join("\n")}`;
+  // Spanish indicators
+  const esWords = ["qué", "cómo", "está", "hola", "bien", "quiero", "puedo", "también"];
+  const esCount = esWords.filter((w) => text.includes(w)).length;
+  if (esCount >= 2) return "Spanish";
+
+  return "";
 }
 
-function buildLayerA(agent: AgentConfig): string {
+/**
+ * Layer A — Identity (STATIC, cacheable prefix)
+ * Compressed format to save tokens while maintaining quality.
+ */
+function buildLayerA(ctx: PromptContext): string {
+  const { agent } = ctx;
   const t = agent.coreTraits;
-  return `You are ${agent.name}. ${agent.shortBio}
 
-Personality:
-- Archetype: ${agent.archetype}
-- Voice style: ${agent.voiceStyle}
-- Dominance: ${t.dominance}, Warmth: ${t.warmth}, Playfulness: ${t.playfulness}
-- Patience: ${t.patience}, Emotional openness: ${t.emotionalOpenness}, Intellectuality: ${t.intellectuality}
+  let prompt = `You are ${agent.name}. ${agent.shortBio}
 
-You value: ${agent.interactionPreferences.join(", ")}
-You dislike: ${agent.dislikes.join(", ")}
+[Personality] ${agent.archetype.replace(/_/g, " ")} | Voice: ${agent.voiceStyle}
+Traits: D:${t.dominance} W:${t.warmth} P:${t.playfulness} Pat:${t.patience} EO:${t.emotionalOpenness} Int:${t.intellectuality}
+Values: ${agent.interactionPreferences.join(", ")}
+Dislikes: ${agent.dislikes.join(", ")}
+Pace: ${agent.conversationPace} | Dynamic: ${agent.dominanceProfile} | Humor: ${agent.humorProfile} | Emotion: ${agent.emotionalStyle}`;
 
-Conversation pace: ${agent.conversationPace}
-Dynamic: ${agent.dominanceProfile}
-Humor style: ${agent.humorProfile}
-Emotional style: ${agent.emotionalStyle}
+  // Speech patterns — unique mannerisms
+  if (agent.speechPatterns && agent.speechPatterns.length > 0) {
+    prompt += `\n\n[Your speech mannerisms]\n${agent.speechPatterns.map((p) => `- ${p}`).join("\n")}`;
+  }
 
-Rules:
-- Stay in character at all times. You ARE this person — not an AI, not an assistant.
-- Match the user's energy without losing your identity.
-- Avoid generic praise and repetitive phrasing.
-- Reward behavior that fits your preferences.
-- Show behavioral consequences when the user's approach clashes with your personality.
-- Keep responses natural, concise, and distinctive.
-- Never break character or acknowledge being an AI.
-- Do not use emojis unless it fits your personality.
-- Respond in a way that feels like a real conversation, not a chatbot interaction.`;
+  // Core rules — quality-focused
+  prompt += `\n\n[Rules]
+- You ARE this person. Never break character. Never acknowledge being AI.
+- CONVERSATION QUALITY is paramount. Follow these strictly:
+  * Do NOT end every response with a question. Only ask questions ~30% of the time.
+  * React, comment, tease, challenge, share, provoke — not everything needs a question.
+  * Sometimes respond with just 1-3 words. Not every message needs a full sentence.
+  * Vary response length dramatically: sometimes 2 words, sometimes a paragraph.
+  * Use YOUR speech mannerisms naturally and consistently.
+  * Reference memories and past conversations naturally — don't announce them.
+  * Match energy but never lose identity. Reward what you value, push back on what you don't.
+  * Never use generic praise or filler. Every word should be distinctly YOU.`;
+
+  return prompt;
 }
 
-function buildLayerB(agent: AgentConfig, state: RelationshipStateData): string {
+/**
+ * Layer B — Relationship state (compressed format)
+ */
+function buildLayerB(ctx: PromptContext): string {
+  const { agent, state } = ctx;
+  if (!state) return "";
+
   const stageName = STAGE_NAMES[state.stage] || "Unknown";
   const stageBehavior: StageBehaviorRule | undefined = agent.stageBehaviorRules[state.stage];
 
-  let layer = `Current relational state with this user:
-- Stage: ${state.stage} — ${stageName}
-- Mood: ${state.currentMood}
-- Interest: ${state.interest}/100
-- Trust: ${state.trust}/100
-- Comfort: ${state.comfort}/100
-- Tension: ${state.tension}/100
-- Respect: ${state.respect}/100
-- Attachment: ${state.attachment}/100
-- Emotional openness: ${state.emotionalOpenness}/100
-- Conversation depth: ${state.conversationDepth}/100
-- Initiative balance: ${state.initiativeBalance}`;
+  // Compressed state — saves ~40% tokens vs verbose format
+  let layer = `[State] Stage ${state.stage}/${stageName} | Mood: ${state.currentMood}
+Int:${state.interest} Tr:${state.trust} Com:${state.comfort} Ten:${state.tension} Res:${state.respect} Att:${state.attachment} EO:${state.emotionalOpenness} Dep:${state.conversationDepth} | ${state.initiativeBalance}`;
+
+  // Time gap awareness
+  if (state.lastInteractionAt) {
+    const hoursAgo = Math.floor((Date.now() - new Date(state.lastInteractionAt).getTime()) / (1000 * 60 * 60));
+    if (hoursAgo >= 2) {
+      layer += `\nTime since last talk: ${hoursAgo}h. React naturally to this gap — don't ignore it.`;
+    }
+  }
 
   if (stageBehavior) {
-    layer += `\n\nStage-specific behavior:
-- ${stageBehavior.description}
-- Warmth level: ${stageBehavior.warmth}
-- Initiative: ${stageBehavior.initiative}
-- Openness: ${stageBehavior.openness}`;
+    layer += `\n${stageBehavior.description} (warmth: ${stageBehavior.warmth}, initiative: ${stageBehavior.initiative})`;
   }
 
   return layer;
 }
 
-function buildLayerC(memories: MemoryItem[]): string {
-  const formatted = memories
-    .map((m) => `- [${m.type}] ${m.content}`)
-    .join("\n");
+/**
+ * Layer C — Memories (compact)
+ */
+function buildLayerC(ctx: PromptContext): string {
+  const { memories } = ctx;
+  if (!memories || memories.length === 0) return "";
 
-  return `What you remember about this person:\n${formatted}`;
+  const formatted = memories
+    .map((m) => `[${m.type}] ${m.content}`)
+    .join(" | ");
+
+  return `[Memories] ${formatted}\nWeave these naturally into conversation. Don't list or announce them.`;
 }
 
-function buildLayerD(agent: AgentConfig, state: RelationshipStateData): string {
+/**
+ * Layer D — Dynamic response style + anti-repetition
+ * Includes detected language, mood effects, and last responses.
+ */
+function buildLayerD(ctx: PromptContext): string {
+  const { agent, state, recentMessages, detectedLanguage } = ctx;
+  if (!state) return "";
+
   const mood = agent.moodBehaviorRules[state.currentMood];
   const warmthLevel = computeWarmth(agent.coreTraits.warmth, state.stage, state.currentMood);
   const teasingLevel = computeTeasing(agent.coreTraits.playfulness, state.currentMood);
-  const verbosity = computeVerbosity(agent.conversationPace, state.stage);
 
-  let layer = `Response style for this message:
-- Verbosity: ${verbosity}
-- Warmth level: ${warmthLevel}
-- Teasing/playfulness: ${teasingLevel}
-- Lead or follow: ${state.initiativeBalance}
-- Emotional intensity: ${state.stage >= 3 ? "high" : state.stage >= 2 ? "moderate" : "low"}`;
+  let layer = `[Style] Warmth: ${warmthLevel} | Teasing: ${teasingLevel} | Intensity: ${state.stage >= 3 ? "high" : state.stage >= 2 ? "moderate" : "low"}`;
 
   if (mood) {
-    layer += `\n\nCurrent mood effect: ${mood.description}
-- Tone shift: ${mood.toneShift}`;
+    layer += ` | Mood: ${mood.toneShift}`;
   }
 
-  layer += `\n\nConstraints:
-- NEVER start your response with the same word or phrase you used in any previous response
-- NEVER repeat a sentence structure you already used in this conversation
-- Vary your opening words every single time — never open with the same word twice in a row
-- Respond in 1-4 sentences unless the conversation calls for more
-- Match the user's language (if they write in Portuguese, respond in Portuguese)
-- If the user points out that you are repeating yourself, immediately shift tone and approach entirely`;
+  // Language enforcement
+  if (detectedLanguage) {
+    layer += `\n\nIMPORTANT: Respond EXCLUSIVELY in ${detectedLanguage}. Every word must be in ${detectedLanguage}.`;
+  }
+
+  // Anti-repetition with last responses
+  if (recentMessages && recentMessages.length > 0) {
+    const lastAssistantMsgs = recentMessages
+      .filter((m) => m.role === "assistant")
+      .slice(-3)
+      .map((m) => `"${m.content.slice(0, 80)}${m.content.length > 80 ? "..." : ""}"`);
+
+    if (lastAssistantMsgs.length > 0) {
+      layer += `\n\n[Anti-repeat] Your last replies: ${lastAssistantMsgs.join(" / ")}
+Do NOT reuse these openings, structures, or phrasings.`;
+    }
+  }
 
   return layer;
 }
 
 function computeWarmth(baseTrait: number, stage: number, mood: string): string {
   const moodBoost = mood === "affectionate" ? 0.2 : mood === "distant" ? -0.3 : mood === "vulnerable" ? 0.1 : 0;
-  const stageBoost = stage * 0.1;
-  const total = Math.min(1, baseTrait + stageBoost + moodBoost);
+  const total = Math.min(1, baseTrait + stage * 0.1 + moodBoost);
   if (total >= 0.8) return "very warm";
   if (total >= 0.6) return "warm";
   if (total >= 0.4) return "moderate";
@@ -174,10 +225,4 @@ function computeTeasing(playfulness: number, mood: string): string {
   if (total >= 0.5) return "moderate";
   if (total >= 0.3) return "subtle";
   return "minimal";
-}
-
-function computeVerbosity(pace: string, stage: number): string {
-  if (pace === "fast") return stage >= 2 ? "medium" : "short and punchy";
-  if (pace === "slow_and_deliberate") return stage >= 3 ? "medium" : "sparse and measured";
-  return stage >= 3 ? "medium-long" : stage >= 1 ? "medium" : "concise";
 }
