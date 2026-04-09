@@ -20,6 +20,8 @@ const completeSchema = z.object({
   attemptId: z.string(),
 });
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     const authUser = await getAuthUser();

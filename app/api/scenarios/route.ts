@@ -3,6 +3,8 @@ import { getAuthUser } from "@/lib/supabase/server";
 import { getOrCreateUser } from "@/lib/services/auth";
 import { getAvailableScenarios } from "@/lib/services/scenario";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const authUser = await getAuthUser();

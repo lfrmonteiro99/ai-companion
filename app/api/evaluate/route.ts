@@ -19,6 +19,8 @@ const evaluateSchema = z.object({
   agentId: z.string(),
 });
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     const authUser = await getAuthUser();

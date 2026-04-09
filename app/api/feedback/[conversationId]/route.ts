@@ -6,6 +6,8 @@ import { getAgent } from "@/lib/agents";
 import { generateSessionFeedback, saveFeedback } from "@/lib/services/feedback";
 import type { SessionFeedback, SkillScores, SuccessCriteria } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: { conversationId: string } },

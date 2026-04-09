@@ -4,6 +4,8 @@ import { getOrCreateUser } from "@/lib/services/auth";
 import { getOrCreateProgress } from "@/lib/services/progression";
 import { getSkillScores } from "@/lib/services/evaluation";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const authUser = await getAuthUser();
