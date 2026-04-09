@@ -7,16 +7,25 @@ export default async function Home() {
   const agents = getAllAgents();
   const authUser = await getAuthUser();
 
-  // Fetch relationship stages for authenticated user
+  // Fetch relationship stages and unread counts for authenticated user
   let stages: Record<string, number> = {};
+  let unreads: Record<string, number> = {};
   if (authUser) {
     const user = await prisma.user.findUnique({ where: { authId: authUser.id } });
     if (user) {
-      const states = await prisma.relationshipState.findMany({
-        where: { userId: user.id },
-        select: { agentId: true, stage: true },
-      });
+      const [states, notifications] = await Promise.all([
+        prisma.relationshipState.findMany({
+          where: { userId: user.id },
+          select: { agentId: true, stage: true },
+        }),
+        prisma.notification.groupBy({
+          by: ["agentId"],
+          where: { userId: user.id, read: false },
+          _count: { id: true },
+        }),
+      ]);
       stages = Object.fromEntries(states.map((s) => [s.agentId, s.stage]));
+      unreads = Object.fromEntries(notifications.map((n) => [n.agentId, n._count.id]));
     }
   }
 
@@ -34,6 +43,7 @@ export default async function Home() {
             archetype={agent.archetype}
             vibeTags={agent.vibeTags}
             stage={stages[agent.id] ?? null}
+            unreadCount={unreads[agent.id] ?? 0}
           />
         ))}
       </div>

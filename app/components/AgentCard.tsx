@@ -7,6 +7,7 @@ interface AgentCardProps {
   archetype: string;
   vibeTags: string[];
   stage?: number | null;
+  unreadCount?: number;
 }
 
 const archetypeColors: Record<string, string> = {
@@ -19,7 +20,7 @@ const archetypeColors: Record<string, string> = {
 
 const STAGE_NAMES: Record<number, string> = { 0: "Stranger", 1: "Curious", 2: "Engaged", 3: "Invested", 4: "Intimate" };
 
-export default function AgentCard({ id, name, shortBio, archetype, vibeTags, stage }: AgentCardProps) {
+export default function AgentCard({ id, name, shortBio, archetype, vibeTags, stage, unreadCount = 0 }: AgentCardProps) {
   const colorClass = archetypeColors[archetype] || "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
   const label = archetype.replace(/_/g, " ");
 
@@ -27,8 +28,15 @@ export default function AgentCard({ id, name, shortBio, archetype, vibeTags, sta
     <div className="rounded-xl border transition hover:shadow-lg" style={{ backgroundColor: "var(--bg-secondary)", borderColor: "var(--border-color)" }}>
       <a href={`/agents/${id}`} className="block p-5">
         <div className="mb-3 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-200 text-lg font-bold text-gray-700 dark:bg-gray-700 dark:text-gray-200">
-            {name[0]}
+          <div className="relative">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-200 text-lg font-bold text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+              {name[0]}
+            </div>
+            {unreadCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </div>
           <div>
             <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>{name}</h2>
