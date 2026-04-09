@@ -36,7 +36,7 @@ export default function Header() {
         <div className="flex items-center gap-2">
           {user ? (
             <>
-              <span className="hidden text-xs sm:inline" style={{ color: "var(--text-muted)" }}>{user.email}</span>
+              <a href="/profile" className="hidden text-xs hover:underline sm:inline" style={{ color: "var(--text-muted)" }}>{user.email}</a>
               <NotificationBell userId={dbUserId} />
               <button onClick={handleLogout} className="text-xs text-red-500 hover:text-red-400">Logout</button>
             </>
