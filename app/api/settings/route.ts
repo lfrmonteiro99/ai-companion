@@ -5,16 +5,33 @@ import { z } from "zod";
 const updateSchema = z.object({
   userId: z.string().uuid(),
   showMilestones: z.boolean().optional(),
+  enableInitiative: z.boolean().optional(),
+  quietHoursStart: z.string().optional(),
+  quietHoursEnd: z.string().optional(),
 });
 
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
-  if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
+  const authId = req.nextUrl.searchParams.get("authId");
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  let user;
+  if (authId) {
+    user = await prisma.user.findUnique({ where: { authId } });
+  } else if (userId) {
+    user = await prisma.user.findUnique({ where: { id: userId } });
+  } else {
+    return NextResponse.json({ error: "userId or authId required" }, { status: 400 });
+  }
+
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-  return NextResponse.json({ showMilestones: user.showMilestones });
+  return NextResponse.json({
+    userId: user.id,
+    showMilestones: user.showMilestones,
+    enableInitiative: user.enableInitiative,
+    quietHoursStart: user.quietHoursStart,
+    quietHoursEnd: user.quietHoursEnd,
+  });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -27,7 +44,12 @@ export async function PATCH(req: NextRequest) {
       data: settings,
     });
 
-    return NextResponse.json({ showMilestones: user.showMilestones });
+    return NextResponse.json({
+      showMilestones: user.showMilestones,
+      enableInitiative: user.enableInitiative,
+      quietHoursStart: user.quietHoursStart,
+      quietHoursEnd: user.quietHoursEnd,
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 });
