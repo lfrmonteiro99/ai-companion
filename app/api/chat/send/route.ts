@@ -6,14 +6,17 @@ const sendMessageSchema = z.object({
   userId: z.string().uuid(),
   agentId: z.string().min(1),
   message: z.string().min(1).max(2000),
+  mode: z.enum(["practice", "scenario", "challenge"]).optional(),
+  scenarioId: z.string().optional(),
+  attemptId: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userId, agentId, message } = sendMessageSchema.parse(body);
+    const { userId, agentId, message, mode, scenarioId, attemptId } = sendMessageSchema.parse(body);
 
-    const result = await sendMessage({ userId, agentId, message });
+    const result = await sendMessage({ userId, agentId, message, mode, scenarioId, attemptId });
 
     return NextResponse.json(result);
   } catch (error) {

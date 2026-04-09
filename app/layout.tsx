@@ -19,13 +19,13 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "AI Companion",
-  description: "Chat with distinct AI personalities",
+  title: "Conversa — Simulador de Conversas Românticas",
+  description: "Pratica comunicação, confiança e leitura social com perfis interpessoais diferentes num simulador gamificado.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`dark ${inter.variable} ${playfair.variable}`}>
+    <html lang="pt" className={`dark ${inter.variable} ${playfair.variable}`}>
       <body className="min-h-screen bg-base-950 font-sans text-base-100">
         <ThemeProvider>
           <Header />

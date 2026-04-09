@@ -157,12 +157,18 @@ export default async function AgentProfilePage({ params }: { params: { agentId: 
         {memories.length > 0 && userId && <MemoryHighlights memories={memories} userId={userId} agentId={agent.id} />}
 
         {/* CTA */}
-        <div className="mt-10 text-center">
+        <div className="mt-10 flex flex-col items-center gap-3">
           <a
             href={`/chat/${agent.id}`}
             className="inline-block rounded-xl bg-[var(--agent-accent)] px-8 py-3 text-sm font-semibold text-white transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_24px_var(--agent-glow)]"
           >
-            {state ? "Continue Chatting" : "Start Chatting"}
+            {state ? "Continuar a conversar" : "Começar a conversar"}
+          </a>
+          <a
+            href={`/scenarios?agentId=${agent.id}`}
+            className="text-xs font-medium text-base-400 transition-colors hover:text-sky-400"
+          >
+            Treinar com cenários &rarr;
           </a>
         </div>
       </div>

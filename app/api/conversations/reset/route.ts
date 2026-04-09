@@ -8,14 +8,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "userId and agentId required" }, { status: 400 });
   }
 
-  // Delete in correct order to respect foreign key constraints
-  const conversation = await prisma.conversation.findUnique({
-    where: { userId_agentId: { userId, agentId } },
+  // Delete ALL conversations for this user-agent pair (practice + scenario)
+  const conversations = await prisma.conversation.findMany({
+    where: { userId, agentId },
+    select: { id: true },
   });
 
-  if (conversation) {
-    await prisma.message.deleteMany({ where: { conversationId: conversation.id } });
-    await prisma.conversation.delete({ where: { id: conversation.id } });
+  if (conversations.length > 0) {
+    const convIds = conversations.map((c) => c.id);
+    await prisma.message.deleteMany({ where: { conversationId: { in: convIds } } });
+    await prisma.scenarioAttempt.deleteMany({ where: { conversationId: { in: convIds } } });
+    await prisma.conversation.deleteMany({ where: { id: { in: convIds } } });
   }
 
   // Delete relationship state, memories, milestones, notifications

@@ -33,7 +33,7 @@ export default function Header() {
     <>
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-base-500/30 px-6 py-4 backdrop-blur-lg bg-base-950/80">
         <a href="/" className="font-display text-xl font-bold italic bg-gradient-to-r from-base-50 to-base-300 bg-clip-text text-transparent transition-all hover:from-white hover:to-base-200">
-          AI Companion
+          Conversa
         </a>
         <div className="flex items-center gap-1.5">
           {user ? (

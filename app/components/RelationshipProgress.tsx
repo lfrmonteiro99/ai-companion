@@ -1,18 +1,7 @@
-const STAGE_NAMES: Record<number, string> = {
-  0: "Stranger",
-  1: "Curious",
-  2: "Engaged",
-  3: "Invested",
-  4: "Intimate",
-};
+"use client";
 
-const STAGE_DESCRIPTIONS: Record<number, string> = {
-  0: "You haven't broken through yet.",
-  1: "She's intrigued — something about you caught her attention.",
-  2: "Your conversations have real substance now.",
-  3: "She's invested in you. This connection means something to her.",
-  4: "Something deeper has unlocked between you two.",
-};
+import { motion, AnimatePresence } from "framer-motion";
+import { getTopLabels, RelationalLabel } from "@/lib/utils/relational-labels";
 
 interface StateData {
   stage: number;
@@ -22,53 +11,84 @@ interface StateData {
   respect: number;
   attachment: number;
   emotionalOpenness: number;
+  conversationDepth: number;
+  dynamicAlignment: number;
   interest: number;
 }
 
-function getNarratives(state: StateData): string[] {
-  const narratives: string[] = [];
-  if (state.trust >= 60) narratives.push("She trusts you.");
-  if (state.comfort >= 60) narratives.push("She feels at ease around you.");
-  if (state.tension >= 60) narratives.push("There's real tension between you.");
-  if (state.respect >= 60) narratives.push("She respects you.");
-  if (state.attachment >= 50) narratives.push("She's becoming attached.");
-  if (state.emotionalOpenness >= 50) narratives.push("She's opening up to you.");
-  if (state.interest >= 70) narratives.push("You have her full attention.");
-  return narratives;
-}
+const STAGE_NAMES: Record<number, string> = {
+  0: "Desconhecidos",
+  1: "Curiosidade",
+  2: "Envolvimento",
+  3: "Investimento",
+  4: "Intimidade",
+};
+
+const STAGE_DESCRIPTIONS: Record<number, string> = {
+  0: "Ainda não quebrou o gelo.",
+  1: "Algo em ti chamou a atenção dela.",
+  2: "As vossas conversas já têm substância.",
+  3: "Ela está investida. Esta ligação importa-lhe.",
+  4: "Algo mais profundo desbloqueou entre vocês.",
+};
+
+const sentimentColors: Record<string, string> = {
+  positive: "text-emerald-400 border-emerald-500/30 bg-emerald-500/5",
+  neutral: "text-base-300 border-base-500/30 bg-base-500/5",
+  negative: "text-rose-400 border-rose-500/30 bg-rose-500/5",
+  warning: "text-amber-400 border-amber-500/30 bg-amber-500/5",
+};
+
+const sentimentDot: Record<string, string> = {
+  positive: "bg-emerald-400",
+  neutral: "bg-base-400",
+  negative: "bg-rose-400",
+  warning: "bg-amber-400",
+};
 
 export default function RelationshipProgress({ state, agentName }: { state: StateData; agentName: string }) {
-  const stageName = STAGE_NAMES[state.stage] || "Unknown";
+  const stageName = STAGE_NAMES[state.stage] || "Desconhecidos";
   const stageDesc = STAGE_DESCRIPTIONS[state.stage] || "";
-  const narratives = getNarratives(state);
-  const progress = Math.min(100, (state.stage / 4) * 100);
+  const labels = getTopLabels(state, 4);
 
   return (
     <section className="mb-8">
       <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-base-400">
-        Your Relationship with {agentName}
+        A tua ligação com {agentName}
       </h2>
       <div className="rounded-xl p-5 surface-1">
-        <div className="mb-1 flex items-center justify-between">
-          <span className="text-sm font-medium text-base-50">{stageName}</span>
-          <span className="text-xs text-base-400">Stage {state.stage}/4</span>
+        {/* Stage name + subtle indicator */}
+        <div className="mb-3 flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--agent-accent)]/15">
+            <div className="h-2.5 w-2.5 rounded-full bg-[var(--agent-accent)] shadow-[0_0_8px_var(--agent-glow)]" />
+          </div>
+          <div>
+            <span className="text-sm font-medium text-base-50">{stageName}</span>
+            <p className="text-xs italic text-base-300">{stageDesc}</p>
+          </div>
         </div>
-        <div className="mb-3 h-1.5 rounded-full bg-base-600/60 overflow-hidden">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-[var(--agent-accent)]/60 to-[var(--agent-accent)] transition-all duration-700 shadow-[0_0_8px_var(--agent-glow)]"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <p className="text-sm italic text-base-200">{stageDesc}</p>
 
-        {narratives.length > 0 && (
-          <div className="mt-4 space-y-1.5">
-            {narratives.map((n) => (
-              <p key={n} className="border-l-2 border-[var(--agent-accent)]/40 pl-3 text-sm italic text-base-200">
-                {n}
-              </p>
+        {/* Relational labels — natural language */}
+        <AnimatePresence mode="popLayout">
+          <div className="space-y-2">
+            {labels.map((label: RelationalLabel, i: number) => (
+              <motion.div
+                key={label.text}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ delay: i * 0.05 }}
+                className={`flex items-center gap-2.5 rounded-lg border px-3 py-2 ${sentimentColors[label.sentiment]}`}
+              >
+                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${sentimentDot[label.sentiment]}`} />
+                <span className="text-sm">{label.text}</span>
+              </motion.div>
             ))}
           </div>
+        </AnimatePresence>
+
+        {labels.length === 0 && (
+          <p className="text-sm italic text-base-400">A conhecer-te...</p>
         )}
       </div>
     </section>

@@ -26,6 +26,9 @@ model User {
   relationStates    RelationshipState[]
   memories          Memory[]
   notifications     Notification[]
+  scenarioAttempts  ScenarioAttempt[]
+  skillScore        UserSkillScore?
+  progress          UserProgress?
 }
 
 model Agent {
@@ -42,16 +45,21 @@ model Agent {
 }
 
 model Conversation {
-  id        String    @id @default(uuid())
-  userId    String
-  agentId   String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  user      User      @relation(fields: [userId], references: [id])
-  agent     Agent     @relation(fields: [agentId], references: [id])
-  messages  Message[]
+  id         String     @id @default(uuid())
+  userId     String
+  agentId    String
+  mode       String     @default("practice") // practice | scenario | challenge
+  scenarioId String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  user       User       @relation(fields: [userId], references: [id])
+  agent      Agent      @relation(fields: [agentId], references: [id])
+  scenario   Scenario?  @relation(fields: [scenarioId], references: [id])
+  messages   Message[]
 
-  @@unique([userId, agentId])
+  // Practice mode uses findFirst with mode filter; scenario mode creates new conversations per attempt
+  @@index([userId, agentId, mode])
+  @@index([userId, agentId, mode, scenarioId])
 }
 
 model Message {
@@ -130,4 +138,89 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId, read, createdAt])
+}
+
+// --- Scenario System ---
+
+model Scenario {
+  id                String            @id @default(uuid())
+  slug              String            @unique
+  title             String
+  description       String
+  objective         String
+  context           String
+  difficulty        String            @default("normal") // easy | normal | hard | expert
+  category          String            // opening | sustain | recovery | rejection | flirting | transition
+  maxMessages       Int?
+  timeLimit         Int?              // seconds
+  unlockRequirement Json?             // e.g. {"minLevel": 3}
+  agentConstraints  Json?             // e.g. {"shortResponses": true, "lowTolerance": true}
+  successCriteria   Json              // e.g. {"minInterest": 60}
+  tips              String[]          @default([])
+  order             Int               @default(0)
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  attempts          ScenarioAttempt[]
+  conversations     Conversation[]
+
+  @@index([category])
+  @@index([difficulty])
+}
+
+model ScenarioAttempt {
+  id             String    @id @default(uuid())
+  userId         String
+  scenarioId     String
+  conversationId String
+  agentId        String
+  status         String    @default("in_progress") // in_progress | completed | abandoned
+  score          Json?     // per-skill scores
+  feedback       Json?     // structured post-session feedback
+  xpEarned       Int       @default(0)
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  user           User      @relation(fields: [userId], references: [id])
+  scenario       Scenario  @relation(fields: [scenarioId], references: [id])
+
+  @@index([userId, scenarioId])
+  @@index([userId, status])
+}
+
+// --- User Skill & Progression ---
+
+model UserSkillScore {
+  id                       String   @id @default(uuid())
+  userId                   String   @unique
+  confidence               Float    @default(50)
+  warmth                   Float    @default(50)
+  curiosity                Float    @default(50)
+  calibration              Float    @default(50)
+  authenticity             Float    @default(50)
+  pressureLevel            Float    @default(50) // inverse: lower is better
+  awkwardness              Float    @default(50) // inverse: lower is better
+  emotionalIntelligence    Float    @default(50)
+  boundaryRespect          Float    @default(50)
+  conversationalMomentum   Float    @default(50)
+  overallScore             Float    @default(50)
+  totalSessions            Int      @default(0)
+  updatedAt                DateTime @updatedAt
+  user                     User     @relation(fields: [userId], references: [id])
+}
+
+model UserProgress {
+  id                 String    @id @default(uuid())
+  userId             String    @unique
+  level              Int       @default(1)
+  xp                 Int       @default(0)
+  xpToNextLevel      Int       @default(100)
+  totalSessions      Int       @default(0)
+  scenariosCompleted Int       @default(0)
+  achievements       Json      @default("[]")
+  unlockedScenarios  String[]  @default([])
+  unlockedAgents     String[]  @default([])
+  streakDays         Int       @default(0)
+  lastSessionAt      DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  user               User      @relation(fields: [userId], references: [id])
 }

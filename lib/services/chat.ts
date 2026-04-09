@@ -6,11 +6,15 @@ import { getOrCreateState, computeStateDelta, applyDelta } from "./relationship"
 import { checkStageProgression } from "./stage";
 import { retrieveMemories, extractMemories } from "./memory";
 import { updateMood } from "./mood";
+import { ConversationMode, AgentConstraints } from "@/lib/types";
 
 export interface SendMessageParams {
   userId: string;
   agentId: string;
   message: string;
+  mode?: ConversationMode;
+  scenarioId?: string;
+  attemptId?: string;
 }
 
 export interface SendMessageResult {
@@ -18,10 +22,11 @@ export interface SendMessageResult {
   conversationId: string;
   stage: number;
   mood: string;
+  messageCount: number;
 }
 
 export async function sendMessage(params: SendMessageParams): Promise<SendMessageResult> {
-  const { userId, agentId, message } = params;
+  const { userId, agentId, message, mode = "practice", scenarioId, attemptId } = params;
 
   const agent = getAgent(agentId);
   if (!agent) {
@@ -29,11 +34,29 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
   }
 
   // 1. Find or create conversation
-  const conversation = await prisma.conversation.upsert({
-    where: { userId_agentId: { userId, agentId } },
-    update: { updatedAt: new Date() },
-    create: { userId, agentId },
-  });
+  let conversation;
+  if ((mode === "scenario" || mode === "challenge") && scenarioId) {
+    // Scenario/challenge: find existing for this attempt or create new
+    const existing = await prisma.conversation.findFirst({
+      where: { userId, agentId, mode, scenarioId },
+      orderBy: { createdAt: "desc" },
+    });
+    conversation = existing || await prisma.conversation.create({
+      data: { userId, agentId, mode, scenarioId },
+    });
+  } else {
+    // Practice mode: one conversation per user-agent pair
+    const existing = await prisma.conversation.findFirst({
+      where: { userId, agentId, mode: "practice" },
+    });
+    conversation = existing || await prisma.conversation.create({
+      data: { userId, agentId, mode: "practice" },
+    });
+    // Update timestamp
+    if (existing) {
+      await prisma.conversation.update({ where: { id: existing.id }, data: { updatedAt: new Date() } });
+    }
+  }
 
   // 2. Get relationship state + update mood
   const state = await getOrCreateState(userId, agentId);
@@ -65,18 +88,33 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
     content: msg.content,
   }));
 
-  // 5. Build system prompt with state + memories + last interaction time
-  const stateWithMood = { ...state, currentMood: mood };
-  const systemPrompt = buildSystemPrompt(agent, stateWithMood, memories, chatHistory);
+  // 5. Load scenario context if applicable
+  let scenarioContext = null;
+  if (scenarioId && (mode === "scenario" || mode === "challenge")) {
+    const scenario = await prisma.scenario.findUnique({
+      where: { id: scenarioId },
+    });
+    if (scenario) {
+      scenarioContext = {
+        context: scenario.context,
+        objective: scenario.objective,
+        agentConstraints: scenario.agentConstraints as AgentConstraints | null,
+      };
+    }
+  }
 
-  // 6. Generate reply — model selected by stage
+  // 6. Build system prompt with state + memories + scenario
+  const stateWithMood = { ...state, currentMood: mood };
+  const systemPrompt = buildSystemPrompt(agent, stateWithMood, memories, chatHistory, scenarioContext);
+
+  // 7. Generate reply — model selected by stage
   const reply = await generateChatResponse({
     systemPrompt,
     messages: chatHistory,
     stage: state.stage,
   });
 
-  // 7. Store assistant message
+  // 8. Store assistant message
   await prisma.message.create({
     data: {
       conversationId: conversation.id,
@@ -85,7 +123,7 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
     },
   });
 
-  // 8. Background tasks — batched: state deltas every 4 messages, memory every 10
+  // 9. Background tasks — batched: state deltas every 4 messages, memory every 10
   const messageCount = recentMessages.length;
   const allMessages = [...recentMessages.map((m) => ({ senderRole: m.senderRole, content: m.content })), { senderRole: "assistant", content: reply }];
 
@@ -100,11 +138,12 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
     messageCount % 10 === 0 ? extractMemories(userId, agentId, allMessages, agent) : Promise.resolve(0),
   ]).catch((err) => console.error("Background task error:", err));
 
-  // 9. Return response
+  // 10. Return response with message count for scenario tracking
   return {
     reply,
     conversationId: conversation.id,
     stage: state.stage,
     mood,
+    messageCount: messageCount + 1,
   };
 }
