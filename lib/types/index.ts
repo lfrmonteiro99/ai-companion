@@ -58,6 +58,7 @@ export interface AgentConfig {
   dominanceProfile: string;
   humorProfile: string;
   emotionalStyle: string;
+  speechPatterns: string[];
   relationshipRules: RelationshipRules;
   memoryBias: string[];
   stageBehaviorRules: Record<number, StageBehaviorRule>;

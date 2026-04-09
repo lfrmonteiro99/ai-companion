@@ -48,17 +48,16 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
     },
   });
 
-  // 4. Load context in parallel: last 30 messages + memories
+  // 4. Load context: last 15 messages (down from 30) + memories
   const [recentMessagesDesc, memories] = await Promise.all([
     prisma.message.findMany({
       where: { conversationId: conversation.id },
       orderBy: { createdAt: "desc" },
-      take: 30,
+      take: 15,
     }),
     retrieveMemories(userId, agentId, agent),
   ]);
 
-  // Reverse so messages are in chronological order for the LLM
   const recentMessages = recentMessagesDesc.reverse();
 
   const chatHistory: ChatMessage[] = recentMessages.map((msg) => ({
@@ -66,14 +65,15 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
     content: msg.content,
   }));
 
-  // 5. Build 4-layer system prompt with state + memories
+  // 5. Build system prompt with state + memories + last interaction time
   const stateWithMood = { ...state, currentMood: mood };
   const systemPrompt = buildSystemPrompt(agent, stateWithMood, memories, chatHistory);
 
-  // 6. Generate reply via OpenAI
+  // 6. Generate reply — model selected by stage
   const reply = await generateChatResponse({
     systemPrompt,
     messages: chatHistory,
+    stage: state.stage,
   });
 
   // 7. Store assistant message
@@ -85,17 +85,19 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
     },
   });
 
-  // 8. Background tasks: state deltas, stage check, memory extraction
+  // 8. Background tasks — batched: state deltas every 4 messages, memory every 10
   const messageCount = recentMessages.length;
   const allMessages = [...recentMessages.map((m) => ({ senderRole: m.senderRole, content: m.content })), { senderRole: "assistant", content: reply }];
 
   Promise.all([
-    // Compute and apply relationship state deltas
-    computeStateDelta(message, reply, agent, state)
-      .then((delta) => applyDelta(userId, agentId, delta))
-      .then(() => checkStageProgression(userId, agentId, agent)),
-    // Extract memories every 3 turns
-    messageCount % 6 === 0 ? extractMemories(userId, agentId, allMessages, agent) : Promise.resolve(0),
+    // State deltas every 4 messages (was every message)
+    messageCount % 4 === 0
+      ? computeStateDelta(message, reply, agent, state)
+          .then((delta) => applyDelta(userId, agentId, delta))
+          .then(() => checkStageProgression(userId, agentId, agent))
+      : Promise.resolve(),
+    // Memory extraction every 10 messages (was every 6)
+    messageCount % 10 === 0 ? extractMemories(userId, agentId, allMessages, agent) : Promise.resolve(0),
   ]).catch((err) => console.error("Background task error:", err));
 
   // 9. Return response

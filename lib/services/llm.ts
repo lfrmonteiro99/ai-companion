@@ -8,16 +8,39 @@ export interface ChatMessage {
   content: string;
 }
 
+/**
+ * Select model based on relationship stage.
+ * Stage 0-1: gpt-4o-mini (16x cheaper, sufficient for simple interactions)
+ * Stage 2+:  gpt-4o (nuanced personality needed)
+ */
+function selectModel(stage?: number): string {
+  if (stage !== undefined && stage <= 1) return "gpt-4o-mini";
+  return config.openaiModel;
+}
+
+/**
+ * Dynamic max_tokens based on context.
+ * Earlier stages = shorter responses. Keeps costs down and feels natural.
+ */
+function selectMaxTokens(stage?: number): number {
+  if (stage !== undefined && stage <= 0) return 200;
+  if (stage !== undefined && stage <= 1) return 300;
+  return 400;
+}
+
 export async function generateChatResponse(params: {
   systemPrompt: string;
   messages: ChatMessage[];
   temperature?: number;
   maxTokens?: number;
+  stage?: number;
 }): Promise<string> {
-  const { systemPrompt, messages, temperature = 0.85, maxTokens = 500 } = params;
+  const { systemPrompt, messages, temperature = 0.9, stage } = params;
+  const model = selectModel(stage);
+  const maxTokens = params.maxTokens || selectMaxTokens(stage);
 
   const response = await openai.chat.completions.create({
-    model: config.openaiModel,
+    model,
     messages: [
       { role: "system", content: systemPrompt },
       ...messages,
