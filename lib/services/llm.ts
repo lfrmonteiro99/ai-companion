@@ -24,6 +24,8 @@ export async function generateChatResponse(params: {
     ],
     temperature,
     max_tokens: maxTokens,
+    frequency_penalty: 0.7,
+    presence_penalty: 0.5,
   });
 
   return response.choices[0]?.message?.content || "";

@@ -65,7 +65,7 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
 
   // 5. Build 4-layer system prompt with state + memories
   const stateWithMood = { ...state, currentMood: mood };
-  const systemPrompt = buildSystemPrompt(agent, stateWithMood, memories);
+  const systemPrompt = buildSystemPrompt(agent, stateWithMood, memories, chatHistory);
 
   // 6. Generate reply via OpenAI
   const reply = await generateChatResponse({

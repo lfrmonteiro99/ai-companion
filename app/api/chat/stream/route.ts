@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
   }));
 
   const stateWithMood = { ...state, currentMood: mood };
-  const systemPrompt = buildSystemPrompt(agent, stateWithMood, memories);
+  const systemPrompt = buildSystemPrompt(agent, stateWithMood, memories, chatHistory);
 
   // Stream response via SSE
   const encoder = new TextEncoder();
@@ -78,8 +78,10 @@ export async function POST(req: NextRequest) {
             { role: "system", content: systemPrompt },
             ...chatHistory,
           ],
-          temperature: 0.85,
+          temperature: 0.9,
           max_tokens: 500,
+          frequency_penalty: 0.7,
+          presence_penalty: 0.5,
           stream: true,
         });
 

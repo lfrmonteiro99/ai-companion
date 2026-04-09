@@ -28,19 +28,37 @@ interface MemoryItem {
   content: string;
 }
 
+interface MessageHistoryItem {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export function buildSystemPrompt(
   agent: AgentConfig,
   state?: RelationshipStateData | null,
   memories?: MemoryItem[],
+  recentMessages?: MessageHistoryItem[],
 ): string {
   const layers = [
     buildLayerA(agent),
     state ? buildLayerB(agent, state) : "",
     memories && memories.length > 0 ? buildLayerC(memories) : "",
     state ? buildLayerD(agent, state) : "",
+    recentMessages && recentMessages.length > 0 ? buildLayerE(recentMessages) : "",
   ];
 
   return layers.filter(Boolean).join("\n\n---\n\n");
+}
+
+function buildLayerE(recentMessages: MessageHistoryItem[]): string {
+  const lastAssistantMessages = recentMessages
+    .filter((m) => m.role === "assistant")
+    .slice(-4)
+    .map((m, i) => `  [${i + 1}] "${m.content.slice(0, 120)}${m.content.length > 120 ? "..." : ""}"`);
+
+  if (lastAssistantMessages.length === 0) return "";
+
+  return `Your last ${lastAssistantMessages.length} responses (DO NOT repeat these phrasings, structures, or opening words):\n${lastAssistantMessages.join("\n")}`;
 }
 
 function buildLayerA(agent: AgentConfig): string {
@@ -128,9 +146,12 @@ function buildLayerD(agent: AgentConfig, state: RelationshipStateData): string {
   }
 
   layer += `\n\nConstraints:
-- Do not repeat phrases from your last 3 responses
+- NEVER start your response with the same word or phrase you used in any previous response
+- NEVER repeat a sentence structure you already used in this conversation
+- Vary your opening words every single time — never open with the same word twice in a row
 - Respond in 1-4 sentences unless the conversation calls for more
-- Match the user's language (if they write in Portuguese, respond in Portuguese)`;
+- Match the user's language (if they write in Portuguese, respond in Portuguese)
+- If the user points out that you are repeating yourself, immediately shift tone and approach entirely`;
 
   return layer;
 }
