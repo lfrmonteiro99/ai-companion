@@ -31,6 +31,7 @@ export default async function ChatPage({ params }: { params: { agentId: string }
     <ChatWindow
       agentId={agent.id}
       agentName={agent.name}
+      agentAvatar={agent.avatar}
       userId={user.id}
       initialMessages={initialMessages}
       conversationId={conversation?.id || null}

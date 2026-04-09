@@ -42,6 +42,7 @@ export default async function Home() {
             shortBio={agent.shortBio}
             archetype={agent.archetype}
             vibeTags={agent.vibeTags}
+            avatar={agent.avatar}
             stage={stages[agent.id] ?? null}
             unreadCount={unreads[agent.id] ?? 0}
           />

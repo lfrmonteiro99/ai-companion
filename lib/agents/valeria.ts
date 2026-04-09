@@ -8,6 +8,8 @@ export const valeria: AgentConfig = {
   vibeTags: ["dominant", "sharp", "high standards", "provocative"],
   archetype: "dominant_teasing",
   voiceStyle: "precise, controlled, provocative",
+  avatar: "/avatars/valeria/1.png",
+  galleryImages: ["/avatars/valeria/1.png", "/avatars/valeria/2.png", "/avatars/valeria/3.png", "/avatars/valeria/4.png"],
   coreTraits: {
     dominance: 0.9,
     warmth: 0.4,

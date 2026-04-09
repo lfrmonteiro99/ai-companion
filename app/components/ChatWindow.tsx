@@ -19,6 +19,7 @@ interface MilestoneEvent {
 interface ChatWindowProps {
   agentId: string;
   agentName: string;
+  agentAvatar?: string;
   userId: string;
   initialMessages: Message[];
   conversationId: string | null;
@@ -26,7 +27,7 @@ interface ChatWindowProps {
 }
 
 export default function ChatWindow({
-  agentId, agentName, userId, initialMessages, conversationId: initialConvId, showMilestones: initialShowMilestones,
+  agentId, agentName, agentAvatar, userId, initialMessages, conversationId: initialConvId, showMilestones: initialShowMilestones,
 }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
@@ -107,7 +108,10 @@ export default function ChatWindow({
       <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} showMilestones={showMilestones} onToggleMilestones={toggleMilestones} />
       <div className="flex h-[calc(100vh-73px)] flex-col">
         <div className="flex items-center justify-between border-b px-4 py-2" style={{ borderColor: "var(--border-color)" }}>
-          <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>{agentName}</span>
+          <div className="flex items-center gap-2">
+            {agentAvatar && <img src={agentAvatar} alt={agentName} className="h-7 w-7 rounded-full object-cover" />}
+            <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>{agentName}</span>
+          </div>
           <div className="flex items-center gap-3">
             <button onClick={() => setShowResetConfirm(true)} className="text-xs hover:opacity-70" style={{ color: "var(--text-muted)" }}>Reset</button>
             <button onClick={() => setSettingsOpen(true)} className="text-xs hover:opacity-70" style={{ color: "var(--text-muted)" }}>Settings</button>
@@ -208,13 +212,13 @@ export default function ChatWindow({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <MessageBubble role={msg.senderRole} content={msg.content} agentName={msg.senderRole === "assistant" ? agentName : undefined} />
+                  <MessageBubble role={msg.senderRole} content={msg.content} agentName={msg.senderRole === "assistant" ? agentName : undefined} agentAvatar={msg.senderRole === "assistant" ? agentAvatar : undefined} />
                 </motion.div>
               ))}
             </AnimatePresence>
             {streamingContent && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                <MessageBubble role="assistant" content={streamingContent} agentName={agentName} />
+                <MessageBubble role="assistant" content={streamingContent} agentName={agentName} agentAvatar={agentAvatar} />
               </motion.div>
             )}
             {sending && !streamingContent && (
