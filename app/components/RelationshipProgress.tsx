@@ -45,23 +45,28 @@ export default function RelationshipProgress({ state, agentName }: { state: Stat
 
   return (
     <section className="mb-8">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-base-400">
         Your Relationship with {agentName}
       </h2>
-      <div className="rounded-xl p-5" style={{ backgroundColor: "var(--bg-secondary)" }}>
+      <div className="rounded-xl p-5 surface-1">
         <div className="mb-1 flex items-center justify-between">
-          <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{stageName}</span>
-          <span className="text-xs" style={{ color: "var(--text-faint)" }}>Stage {state.stage}/4</span>
+          <span className="text-sm font-medium text-base-50">{stageName}</span>
+          <span className="text-xs text-base-400">Stage {state.stage}/4</span>
         </div>
-        <div className="mb-3 h-1.5 rounded-full" style={{ backgroundColor: "var(--bg-tertiary)" }}>
-          <div className="h-full rounded-full bg-purple-500 transition-all" style={{ width: `${progress}%` }} />
+        <div className="mb-3 h-1.5 rounded-full bg-base-600/60 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-[var(--agent-accent)]/60 to-[var(--agent-accent)] transition-all duration-700 shadow-[0_0_8px_var(--agent-glow)]"
+            style={{ width: `${progress}%` }}
+          />
         </div>
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>{stageDesc}</p>
+        <p className="text-sm italic text-base-200">{stageDesc}</p>
 
         {narratives.length > 0 && (
           <div className="mt-4 space-y-1.5">
             {narratives.map((n) => (
-              <p key={n} className="text-sm italic" style={{ color: "var(--text-secondary)" }}>{n}</p>
+              <p key={n} className="border-l-2 border-[var(--agent-accent)]/40 pl-3 text-sm italic text-base-200">
+                {n}
+              </p>
             ))}
           </div>
         )}

@@ -1,5 +1,6 @@
 "use client";
 
+import { X, Sun, Moon } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 
 interface SettingsDrawerProps {
@@ -14,46 +15,58 @@ export default function SettingsDrawer({ open, onClose, showMilestones, onToggle
 
   return (
     <>
-      {open && <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} />}
+      {open && <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={onClose} />}
       <div
-        className={`fixed right-0 top-0 z-50 h-full w-80 transform transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
-        style={{ backgroundColor: "var(--bg-secondary)" }}
+        className={`fixed right-0 top-0 z-50 h-full w-80 transform transition-transform duration-300 ease-out ${open ? "translate-x-0" : "translate-x-full"} surface-2`}
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "var(--border-color)" }}>
-            <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>Settings</h2>
-            <button onClick={onClose} className="rounded-lg p-1 hover:opacity-70" style={{ color: "var(--text-muted)" }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <div className="flex items-center justify-between border-b border-base-500/30 px-5 py-4">
+            <h2 className="font-display text-lg font-semibold text-base-50">Settings</h2>
+            <button onClick={onClose} className="rounded-lg p-1.5 text-base-400 transition-colors hover:bg-base-600/50 hover:text-base-100">
+              <X size={20} />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
             <div>
-              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Appearance</h3>
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-base-400">Appearance</h3>
               <div className="flex gap-2">
                 <button
                   onClick={() => { if (theme === "dark") toggleTheme(); }}
-                  className={`flex-1 rounded-xl border-2 px-4 py-3 text-sm font-medium transition ${theme === "light" ? "border-blue-500 bg-blue-50 text-blue-700" : ""}`}
-                  style={theme === "dark" ? { backgroundColor: "var(--bg-tertiary)", borderColor: "var(--border-color)", color: "var(--text-muted)" } : {}}
+                  className={`flex-1 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all ${
+                    theme === "light"
+                      ? "border-mira-500/60 bg-mira-500/10 text-mira-300"
+                      : "border-base-500/40 bg-base-700/50 text-base-400 hover:border-base-400/60"
+                  }`}
                 >
-                  <div className="mb-1 text-lg">&#9728;</div>Light
+                  <Sun size={18} className="mx-auto mb-1" />
+                  Light
                 </button>
                 <button
                   onClick={() => { if (theme === "light") toggleTheme(); }}
-                  className={`flex-1 rounded-xl border-2 px-4 py-3 text-sm font-medium transition ${theme === "dark" ? "border-blue-500 bg-blue-950 text-blue-300" : ""}`}
-                  style={theme === "light" ? { backgroundColor: "var(--bg-tertiary)", borderColor: "var(--border-color)", color: "var(--text-muted)" } : {}}
+                  className={`flex-1 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all ${
+                    theme === "dark"
+                      ? "border-mira-500/60 bg-mira-500/10 text-mira-300"
+                      : "border-base-500/40 bg-base-700/50 text-base-400 hover:border-base-400/60"
+                  }`}
                 >
-                  <div className="mb-1 text-lg">&#9790;</div>Dark
+                  <Moon size={18} className="mx-auto mb-1" />
+                  Dark
                 </button>
               </div>
             </div>
             {onToggleMilestones !== undefined && (
               <div>
-                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Chat</h3>
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input type="checkbox" checked={showMilestones} onChange={onToggleMilestones} className="mt-0.5 h-5 w-5 rounded" />
+                <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-base-400">Chat</h3>
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={showMilestones}
+                    onChange={onToggleMilestones}
+                    className="mt-0.5 h-5 w-5 rounded border-base-500 bg-base-700 accent-[var(--agent-accent)]"
+                  />
                   <div>
-                    <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Relationship milestones</div>
-                    <div className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                    <div className="text-sm font-medium text-base-100 group-hover:text-base-50 transition-colors">Relationship milestones</div>
+                    <div className="text-xs mt-0.5 text-base-400">
                       Narrative hints like &quot;She is starting to open up&quot;. Disable for a more natural experience.
                     </div>
                   </div>
@@ -61,8 +74,8 @@ export default function SettingsDrawer({ open, onClose, showMilestones, onToggle
               </div>
             )}
           </div>
-          <div className="border-t px-5 py-4" style={{ borderColor: "var(--border-color)" }}>
-            <p className="text-xs" style={{ color: "var(--text-faint)" }}>AI Companion v0.1.0</p>
+          <div className="border-t border-base-500/30 px-5 py-4">
+            <p className="text-[10px] text-base-500">AI Companion v0.1.0</p>
           </div>
         </div>
       </div>

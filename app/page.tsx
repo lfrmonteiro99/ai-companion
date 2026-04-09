@@ -30,23 +30,41 @@ export default async function Home() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-10">
-      <h1 className="mb-2 text-3xl font-bold" style={{ color: "var(--text-primary)" }}>Choose Your Companion</h1>
-      <p className="mb-8" style={{ color: "var(--text-muted)" }}>Each personality is distinct. Who catches your attention?</p>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {agents.map((agent) => (
-          <AgentCard
-            key={agent.id}
-            id={agent.id}
-            name={agent.name}
-            shortBio={agent.shortBio}
-            archetype={agent.archetype}
-            vibeTags={agent.vibeTags}
-            avatar={agent.avatar}
-            stage={stages[agent.id] ?? null}
-            unreadCount={unreads[agent.id] ?? 0}
-          />
-        ))}
+    <div className="relative min-h-[calc(100vh-73px)] overflow-hidden">
+      {/* Ambient background */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-1/4 top-0 h-[500px] w-[600px] rounded-full bg-mira-500/[0.06] blur-[120px]" />
+        <div className="absolute right-1/4 top-20 h-[400px] w-[500px] rounded-full bg-sable-500/[0.05] blur-[100px]" />
+        <div className="absolute bottom-0 left-1/2 h-[300px] w-[800px] -translate-x-1/2 rounded-full bg-valeria-500/[0.04] blur-[120px]" />
+      </div>
+
+      <div className="relative mx-auto max-w-4xl px-6 py-12">
+        {/* Hero */}
+        <div className="mb-10 text-center">
+          <h1 className="mb-3 font-display text-4xl font-bold italic text-base-50">
+            Choose Your Companion
+          </h1>
+          <p className="mx-auto max-w-md text-base-300">
+            Five distinct personalities. Each with her own rhythm, standards, and way of connecting. Who catches your attention?
+          </p>
+        </div>
+
+        {/* Agent grid */}
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {agents.map((agent) => (
+            <AgentCard
+              key={agent.id}
+              id={agent.id}
+              name={agent.name}
+              shortBio={agent.shortBio}
+              archetype={agent.archetype}
+              vibeTags={agent.vibeTags}
+              avatar={agent.avatar}
+              stage={stages[agent.id] ?? null}
+              unreadCount={unreads[agent.id] ?? 0}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
