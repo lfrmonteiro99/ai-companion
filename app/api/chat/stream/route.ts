@@ -17,6 +17,9 @@ const sendMessageSchema = z.object({
   userId: z.string().uuid(),
   agentId: z.string().min(1),
   message: z.string().min(1).max(2000),
+  mode: z.enum(["practice", "scenario", "challenge"]).optional(),
+  scenarioId: z.string().optional(),
+  attemptId: z.string().optional(),
 });
 
 /**
@@ -43,18 +46,29 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ error: "Invalid request" }), { status: 400 });
   }
 
-  const { userId, agentId, message } = body;
+  const { userId, agentId, message, mode = "practice", scenarioId } = body;
   const agent = getAgent(agentId);
   if (!agent) {
     return new Response(JSON.stringify({ error: "Agent not found" }), { status: 404 });
   }
 
-  // Setup
-  const conversation = await prisma.conversation.upsert({
-    where: { userId_agentId: { userId, agentId } },
-    update: { updatedAt: new Date() },
-    create: { userId, agentId },
-  });
+  // Setup — scenario mode may create fresh conversations
+  let conversation;
+  if (scenarioId && (mode === "scenario" || mode === "challenge")) {
+    // Find existing scenario conversation or create
+    const existing = await prisma.conversation.findFirst({
+      where: { userId, agentId, scenarioId, mode },
+    });
+    conversation = existing || await prisma.conversation.create({
+      data: { userId, agentId, mode, scenarioId },
+    });
+  } else {
+    conversation = await prisma.conversation.upsert({
+      where: { userId_agentId: { userId, agentId } },
+      update: { updatedAt: new Date() },
+      create: { userId, agentId, mode: "practice" },
+    });
+  }
 
   const state = await getOrCreateState(userId, agentId);
   const previousStage = state.stage;
@@ -81,8 +95,21 @@ export async function POST(req: NextRequest) {
     content: msg.content,
   }));
 
+  // Load scenario context if in scenario/challenge mode
+  let scenarioContext = null;
+  if (scenarioId && (mode === "scenario" || mode === "challenge")) {
+    const scenario = await prisma.scenario.findUnique({ where: { id: scenarioId } });
+    if (scenario) {
+      scenarioContext = {
+        context: scenario.context,
+        objective: scenario.objective,
+        agentConstraints: scenario.agentConstraints as import("@/lib/types").AgentConstraints | null,
+      };
+    }
+  }
+
   const stateWithMood = { ...state, currentMood: mood };
-  const systemPrompt = buildSystemPrompt(agent, stateWithMood, memories, chatHistory);
+  const systemPrompt = buildSystemPrompt(agent, stateWithMood, memories, chatHistory, scenarioContext);
 
   // Model and token selection based on stage
   const model = selectModel(state.stage);

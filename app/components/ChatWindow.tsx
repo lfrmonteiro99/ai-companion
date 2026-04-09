@@ -25,6 +25,14 @@ interface UserProfile {
   interests?: string[];
 }
 
+interface ScenarioInfo {
+  id: string;
+  title: string;
+  objective: string;
+  maxMessages?: number | null;
+  timeLimit?: number | null;
+}
+
 interface ChatWindowProps {
   agentId: string;
   agentName: string;
@@ -36,6 +44,9 @@ interface ChatWindowProps {
   openers?: string[];
   openerChance?: number;
   userProfile?: UserProfile;
+  mode?: string;
+  scenarioData?: ScenarioInfo | null;
+  attemptId?: string;
 }
 
 const AGENT_THEME: Record<string, string> = {
@@ -47,7 +58,7 @@ const AGENT_THEME: Record<string, string> = {
 };
 
 export default function ChatWindow({
-  agentId, agentName, agentAvatar, userId, initialMessages, conversationId: initialConvId, showMilestones: initialShowMilestones, openers, openerChance = 0.5, userProfile,
+  agentId, agentName, agentAvatar, userId, initialMessages, conversationId: initialConvId, showMilestones: initialShowMilestones, openers, openerChance = 0.5, userProfile, mode = "practice", scenarioData, attemptId,
 }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
@@ -62,8 +73,12 @@ export default function ChatWindow({
   const [showTyping, setShowTyping] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [hasMore, setHasMore] = useState(initialMessages.length >= 50);
+  const [scenarioEnding, setScenarioEnding] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const isScenario = mode === "scenario" || mode === "challenge";
+  const userMessageCount = messages.filter((m) => m.senderRole === "user").length;
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, streamingContent, showTyping]);
 
@@ -131,12 +146,12 @@ export default function ChatWindow({
     setShowTyping(true);
 
     try {
-      const res = await fetch("/api/chat/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, agentId, message: text }) });
+      const res = await fetch("/api/chat/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, agentId, message: text, mode, scenarioId: scenarioData?.id, attemptId }) });
       await new Promise((r) => setTimeout(r, typingDelay));
       setShowTyping(false);
 
       if (!res.ok || !res.body) {
-        const fb = await fetch("/api/chat/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, agentId, message: text }) });
+        const fb = await fetch("/api/chat/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, agentId, message: text, mode, scenarioId: scenarioData?.id, attemptId }) });
         const d = await fb.json();
         if (!convId) setConvId(d.conversationId);
         setMessages((p) => [...p, { id: `r-${Date.now()}`, senderRole: "assistant", content: d.reply, createdAt: new Date().toISOString() }]);
@@ -283,6 +298,43 @@ export default function ChatWindow({
           )}
         </AnimatePresence>
 
+        {/* Scenario header */}
+        {isScenario && scenarioData && (
+          <div className="flex items-center justify-between border-b border-sky-500/20 bg-sky-500/5 px-4 py-2">
+            <div className="flex-1 min-w-0">
+              <p className="truncate text-xs font-medium text-sky-300">{scenarioData.objective}</p>
+            </div>
+            <div className="flex items-center gap-3 ml-3 shrink-0">
+              {scenarioData.maxMessages && (
+                <span className="text-xs text-base-400">
+                  {userMessageCount}/{scenarioData.maxMessages} msgs
+                </span>
+              )}
+              <button
+                onClick={async () => {
+                  if (!attemptId) return;
+                  setScenarioEnding(true);
+                  try {
+                    const res = await fetch("/api/scenarios/complete", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ attemptId }),
+                    });
+                    const data = await res.json();
+                    if (data.feedback) {
+                      window.location.href = `/analysis/${convId || ""}`;
+                    }
+                  } catch { setScenarioEnding(false); }
+                }}
+                disabled={scenarioEnding}
+                className="rounded-lg px-2.5 py-1 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/10 disabled:opacity-50"
+              >
+                {scenarioEnding ? "A terminar..." : "Terminar"}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Messages area */}
         <div className="relative flex-1 overflow-hidden">
           {/* Top fade */}
@@ -325,7 +377,7 @@ export default function ChatWindow({
                   )}
                   <div className="text-center space-y-1.5 max-w-xs">
                     <p className="font-display text-xl font-semibold italic text-base-50">{agentName}</p>
-                    <p className="text-sm text-base-300">Start a conversation and see where it goes...</p>
+                    <p className="text-sm text-base-300">{isScenario ? "Começa a conversa e tenta atingir o objetivo." : "Start a conversation and see where it goes..."}</p>
                   </div>
                 </motion.div>
               )}
@@ -395,6 +447,19 @@ export default function ChatWindow({
         </div>
 
         {/* Input area */}
+        <div className="border-t border-base-500/30 px-4 py-3 backdrop-blur-md bg-base-950/60">
+          {/* Analysis link for practice mode */}
+          {!isScenario && messages.length >= 6 && convId && (
+            <div className="mx-auto mb-2 max-w-2xl">
+              <a
+                href={`/analysis/${convId}`}
+                className="block text-center text-xs text-base-400 transition-colors hover:text-sky-400"
+              >
+                Analisar esta conversa &rarr;
+              </a>
+            </div>
+          )}
+        </div>
         <div className="border-t border-base-500/30 px-4 py-3 backdrop-blur-md bg-base-950/60">
           <div className="mx-auto flex max-w-2xl gap-2">
             <input
