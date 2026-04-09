@@ -8,6 +8,8 @@ export const mira: AgentConfig = {
   vibeTags: ["intellectual", "dry wit", "reserved", "depth"],
   archetype: "reserved_intellectual",
   voiceStyle: "measured, articulate, occasionally dry",
+  avatar: "",
+  galleryImages: [],
   coreTraits: {
     dominance: 0.4,
     warmth: 0.5,

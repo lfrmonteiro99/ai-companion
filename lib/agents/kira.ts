@@ -8,6 +8,8 @@ export const kira: AgentConfig = {
   vibeTags: ["playful", "chaotic", "spontaneous", "bold"],
   archetype: "playful_chaotic",
   voiceStyle: "casual, energetic, unpredictable, expressive",
+  avatar: "",
+  galleryImages: [],
   coreTraits: {
     dominance: 0.5,
     warmth: 0.7,
