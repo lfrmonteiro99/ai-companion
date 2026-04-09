@@ -25,6 +25,7 @@ export default async function ChatPage({ params }: { params: { agentId: string }
     id: m.id,
     senderRole: m.senderRole as "user" | "assistant",
     content: m.content,
+    createdAt: m.createdAt.toISOString(),
   }));
 
   return (
@@ -36,6 +37,7 @@ export default async function ChatPage({ params }: { params: { agentId: string }
       initialMessages={initialMessages}
       conversationId={conversation?.id || null}
       showMilestones={user.showMilestones}
+      openers={agent.openers}
     />
   );
 }
