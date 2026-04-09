@@ -9,6 +9,7 @@ interface Message {
   id: string;
   senderRole: "user" | "assistant";
   content: string;
+  createdAt?: string;
 }
 
 interface MilestoneEvent {
@@ -24,10 +25,11 @@ interface ChatWindowProps {
   initialMessages: Message[];
   conversationId: string | null;
   showMilestones: boolean;
+  openers?: string[];
 }
 
 export default function ChatWindow({
-  agentId, agentName, agentAvatar, userId, initialMessages, conversationId: initialConvId, showMilestones: initialShowMilestones,
+  agentId, agentName, agentAvatar, userId, initialMessages, conversationId: initialConvId, showMilestones: initialShowMilestones, openers,
 }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
@@ -39,9 +41,30 @@ export default function ChatWindow({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [showTyping, setShowTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, streamingContent]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, streamingContent, showTyping]);
+
+  // Show agent opener when chat is empty (first time)
+  useEffect(() => {
+    if (initialMessages.length === 0 && openers && openers.length > 0) {
+      const opener = openers[Math.floor(Math.random() * openers.length)];
+      // Simulate typing delay
+      setShowTyping(true);
+      const delay = 1000 + Math.random() * 2000;
+      const timer = setTimeout(() => {
+        setShowTyping(false);
+        setMessages([{
+          id: `opener-${Date.now()}`,
+          senderRole: "assistant",
+          content: opener,
+          createdAt: new Date().toISOString(),
+        }]);
+      }, delay);
+      return () => clearTimeout(timer);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleReset() {
     setResetting(true);
@@ -70,16 +93,25 @@ export default function ChatWindow({
   async function handleSend() {
     const text = input.trim();
     if (!text || sending) return;
-    setMessages((p) => [...p, { id: `u-${Date.now()}`, senderRole: "user", content: text }]);
+    setMessages((p) => [...p, { id: `u-${Date.now()}`, senderRole: "user", content: text, createdAt: new Date().toISOString() }]);
     setInput(""); setSending(true); setStreamingContent("");
+
+    // Typing delay: 0.8-2s before showing streaming
+    const typingDelay = 800 + Math.random() * 1200;
+    setShowTyping(true);
 
     try {
       const res = await fetch("/api/chat/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, agentId, message: text }) });
+
+      // Wait for typing delay before showing stream
+      await new Promise((r) => setTimeout(r, typingDelay));
+      setShowTyping(false);
+
       if (!res.ok || !res.body) {
         const fb = await fetch("/api/chat/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, agentId, message: text }) });
         const d = await fb.json();
         if (!convId) setConvId(d.conversationId);
-        setMessages((p) => [...p, { id: `r-${Date.now()}`, senderRole: "assistant", content: d.reply }]);
+        setMessages((p) => [...p, { id: `r-${Date.now()}`, senderRole: "assistant", content: d.reply, createdAt: new Date().toISOString() }]);
         return;
       }
       const reader = res.body.getReader();
@@ -97,9 +129,10 @@ export default function ChatWindow({
           } catch { /* skip */ }
         }
       }
-      if (acc) { setMessages((p) => [...p, { id: `r-${Date.now()}`, senderRole: "assistant", content: acc }]); setStreamingContent(""); }
+      if (acc) { setMessages((p) => [...p, { id: `r-${Date.now()}`, senderRole: "assistant", content: acc, createdAt: new Date().toISOString() }]); setStreamingContent(""); }
     } catch {
-      setMessages((p) => [...p, { id: `e-${Date.now()}`, senderRole: "assistant", content: "Something went wrong. Try again." }]);
+      setShowTyping(false);
+      setMessages((p) => [...p, { id: `e-${Date.now()}`, senderRole: "assistant", content: "Something went wrong. Try again.", createdAt: new Date().toISOString() }]);
     } finally { setSending(false); }
   }
 
@@ -110,7 +143,10 @@ export default function ChatWindow({
         <div className="flex items-center justify-between border-b px-4 py-2" style={{ borderColor: "var(--border-color)" }}>
           <div className="flex items-center gap-2">
             {agentAvatar && <img src={agentAvatar} alt={agentName} className="h-7 w-7 rounded-full object-cover" />}
-            <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>{agentName}</span>
+            <div>
+              <span className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>{agentName}</span>
+              {showTyping && <span className="ml-2 text-[10px]" style={{ color: "var(--text-faint)" }}>typing...</span>}
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => setShowResetConfirm(true)} className="text-xs hover:opacity-70" style={{ color: "var(--text-muted)" }}>Reset</button>
@@ -194,7 +230,7 @@ export default function ChatWindow({
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
           <div className="mx-auto max-w-2xl space-y-3">
-            {messages.length === 0 && (
+            {messages.length === 0 && !showTyping && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -212,7 +248,13 @@ export default function ChatWindow({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <MessageBubble role={msg.senderRole} content={msg.content} agentName={msg.senderRole === "assistant" ? agentName : undefined} agentAvatar={msg.senderRole === "assistant" ? agentAvatar : undefined} />
+                  <MessageBubble
+                    role={msg.senderRole}
+                    content={msg.content}
+                    agentName={msg.senderRole === "assistant" ? agentName : undefined}
+                    agentAvatar={msg.senderRole === "assistant" ? agentAvatar : undefined}
+                    timestamp={msg.createdAt}
+                  />
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -221,19 +263,25 @@ export default function ChatWindow({
                 <MessageBubble role="assistant" content={streamingContent} agentName={agentName} agentAvatar={agentAvatar} />
               </motion.div>
             )}
-            {sending && !streamingContent && (
+            {showTyping && !streamingContent && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex justify-start"
+                className="flex items-start gap-2"
               >
+                {agentAvatar ? (
+                  <img src={agentAvatar} alt={agentName} className="mt-1 h-8 w-8 shrink-0 rounded-full object-cover" />
+                ) : (
+                  <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold" style={{ backgroundColor: "var(--bg-tertiary)", color: "var(--text-muted)" }}>
+                    {agentName[0]}
+                  </div>
+                )}
                 <div className="flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm" style={{ backgroundColor: "var(--bubble-agent)", color: "var(--text-muted)" }}>
                   <span className="flex gap-1">
                     <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" style={{ animationDelay: "0ms" }} />
                     <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" style={{ animationDelay: "150ms" }} />
                     <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" style={{ animationDelay: "300ms" }} />
                   </span>
-                  {agentName} is typing...
                 </div>
               </motion.div>
             )}
