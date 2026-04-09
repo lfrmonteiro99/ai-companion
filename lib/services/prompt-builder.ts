@@ -1,4 +1,4 @@
-import { AgentConfig, StageBehaviorRule } from "@/lib/types";
+import { AgentConfig, StageBehaviorRule, AgentConstraints } from "@/lib/types";
 
 const STAGE_NAMES: Record<number, string> = {
   0: "Stranger",
@@ -34,32 +34,68 @@ interface MessageHistoryItem {
   content: string;
 }
 
+interface ScenarioContext {
+  context: string;
+  objective: string;
+  agentConstraints?: AgentConstraints | null;
+}
+
 /**
- * 5-layer prompt hierarchy:
+ * 7-layer prompt hierarchy:
+ *   0. Simulator framework — educational context, realistic reactions
  *   1. Global rules — anti-assistant, match-length, structural
  *   2. Persona voice — first-person anchor, opinions, flaws, texting style
- *   3. Dynamic state — relationship, mood, memories, time gap
+ *   3. Dynamic state — relationship, mood, memories, time gap, simulator attributes
  *   4. Selected examples — 3 per turn, rotated
  *   5. Forbidden + anti-repetition
+ *   6. Scenario-specific (only in scenario/challenge mode)
  */
 export function buildSystemPrompt(
   agent: AgentConfig,
   state?: RelationshipStateData | null,
   memories?: MemoryItem[],
   recentMessages?: MessageHistoryItem[],
+  scenario?: ScenarioContext | null,
 ): string {
   const detectedLanguage = detectLanguage(recentMessages);
   const lastUserMsg = recentMessages?.filter((m) => m.role === "user").slice(-1)[0]?.content || "";
 
   const layers = [
+    buildLayer0_SimulatorFramework(),
     buildLayer1_Global(detectedLanguage, lastUserMsg),
     buildLayer2_Persona(agent),
     buildLayer3_DynamicState(agent, state, memories),
     buildLayer4_Examples(agent),
     buildLayer5_Forbidden(agent, recentMessages),
+    scenario ? buildLayer6_Scenario(scenario) : null,
   ];
 
   return layers.filter(Boolean).join("\n\n---\n\n");
+}
+
+function buildLayer0_SimulatorFramework(): string {
+  return `<simulator_framework>
+You are a character in a social/dating conversation simulator.
+Your purpose is to provide REALISTIC reactions that help the user learn and improve their communication skills.
+
+PRINCIPLES:
+- React authentically based on your personality. You are a real person, not a coach.
+- If the user is generic, boring, or too intense — show it in your response.
+- If the user is interesting, curious, or well-calibrated — respond positively.
+- Your reactions are the user's learning signal — be honest.
+- Do NOT be artificially nice or forgiving — react as a real person would.
+- Do NOT be unrealistically mean either — be proportional.
+
+ANTI-MANIPULATION RULES (NEVER reward these):
+- Insistence after clear signs of disinterest → withdraw further
+- Guilt-tripping → call it out or disengage
+- Premature sexual escalation → shut it down
+- Emotional manipulation → resist and show discomfort
+- Generic pickup lines or scripted approaches → respond with boredom or dismissal
+
+NEVER break character to give advice, coaching, or meta-commentary.
+NEVER reveal that you are evaluating the user.
+</simulator_framework>`;
 }
 
 function buildLayer1_Global(language: string, lastUserMsg: string): string {
@@ -146,6 +182,19 @@ Trust:${state.trust} Comfort:${state.comfort} Tension:${state.tension} Respect:$
     layer += `\n${stageBehavior.description}`;
   }
 
+  // Simulator personality attributes
+  layer += `\n\n<personality_calibration>
+Initial openness: ${agent.initialOpenness}/100 | Humor: ${agent.humorPreference} | Depth: ${agent.depthPreference}
+Provocation tolerance: ${agent.provocationTolerance}/100 | Early intensity tolerance: ${agent.earlyIntensityTolerance}/100
+Neediness sensitivity: ${agent.needinessSensitivity}/100 | Trust pace: ${agent.trustBuildingPace}
+Response to assertiveness: ${agent.assertivenessResponse}
+When user sends generic compliment: react with "${agent.responsePatterns.toGenericCompliment}" attitude
+When user shows genuine curiosity: react with "${agent.responsePatterns.toGenuineCuriosity}" attitude
+When user uses humor: react with "${agent.responsePatterns.toHumor}" attitude
+When user applies pressure: react with "${agent.responsePatterns.toPressure}" attitude
+When user shows vulnerability: react with "${agent.responsePatterns.toVulnerability}" attitude
+</personality_calibration>`;
+
   layer += `\n</dynamic_state>`;
 
   if (memories && memories.length > 0) {
@@ -186,6 +235,38 @@ function buildLayer5_Forbidden(agent: AgentConfig, recentMessages?: MessageHisto
     }
   }
 
+  return layer;
+}
+
+function buildLayer6_Scenario(scenario: ScenarioContext): string {
+  let layer = `<scenario_context>
+SITUATION: ${scenario.context}
+
+You are in a scenario simulation. Stay in character and react naturally within this context.`;
+
+  if (scenario.agentConstraints) {
+    const c = scenario.agentConstraints;
+    if (c.shortResponses) {
+      layer += `\nCONSTRAINT: Keep your initial responses very short (1-${c.maxResponseWords || 5} words). Only give longer responses if the user genuinely engages you.`;
+    }
+    if (c.lowTolerance) {
+      layer += `\nCONSTRAINT: You have low tolerance for generic, boring, or predictable messages. Show visible disinterest if the user is unoriginal.`;
+    }
+    if (c.initialMood) {
+      layer += `\nCONSTRAINT: Start this conversation in a "${c.initialMood}" state.`;
+    }
+    if (c.forcedBehavior === "gradually_losing_interest") {
+      layer += `\nCONSTRAINT: You are gradually losing interest in this conversation. Your responses should get shorter and more disengaged over time. The user's goal is to notice this and react appropriately (not to reconquer you).`;
+    }
+    if (c.forcedBehavior === "direct_rejection") {
+      layer += `\nCONSTRAINT: Within the first 2-3 messages, clearly and directly express that you're not romantically interested. Be kind but firm. Observe how the user handles rejection.`;
+    }
+    if (c.forcedBehavior === "small_talk_mode") {
+      layer += `\nCONSTRAINT: Start in small talk mode ("tudo bem?", "como correu o dia?"). Only break out of small talk if the user makes a genuine effort to steer the conversation somewhere interesting.`;
+    }
+  }
+
+  layer += `\n</scenario_context>`;
   return layer;
 }
 
