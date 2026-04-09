@@ -56,15 +56,15 @@ export default async function ProfilePage() {
       <div className="relative mx-auto max-w-2xl px-6 py-10">
         {/* User Info */}
         <div className="mb-8 flex items-start gap-4">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-base-700 ring-2 ring-base-500/30 text-2xl font-display font-bold text-base-200">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--bg-elevated)] ring-2 ring-[var(--border)] text-2xl font-display font-bold text-[var(--text-secondary)]">
             {(user.displayName || user.email || "?")[0].toUpperCase()}
           </div>
           <div>
             {user.displayName && (
-              <h1 className="font-display text-xl font-bold text-base-50">{user.displayName}</h1>
+              <h1 className="font-display text-xl font-bold text-[var(--text-primary)]">{user.displayName}</h1>
             )}
-            <p className="text-sm text-base-300">{user.email}</p>
-            <p className="mt-1 text-xs text-base-500">
+            <p className="text-sm text-[var(--text-muted)]">{user.email}</p>
+            <p className="mt-1 text-xs text-[var(--text-primary)]0">
               Member since {user.createdAt.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
             </p>
           </div>
@@ -79,7 +79,7 @@ export default async function ProfilePage() {
 
         {/* Stats Overview */}
         <section className="mb-8">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-base-400">Overview</h2>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Overview</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {[
               { label: "Companions", value: activeAgents.length },
@@ -88,8 +88,8 @@ export default async function ProfilePage() {
               { label: "Memories", value: memoryCount },
             ].map((stat) => (
               <div key={stat.label} className="rounded-xl p-4 text-center surface-1">
-                <div className="text-2xl font-bold text-base-50">{stat.value}</div>
-                <div className="mt-1 text-xs text-base-400">{stat.label}</div>
+                <div className="text-2xl font-bold text-[var(--text-primary)]">{stat.value}</div>
+                <div className="mt-1 text-xs text-[var(--text-muted)]">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -97,7 +97,7 @@ export default async function ProfilePage() {
 
         {/* Agent Relationships */}
         <section className="mb-8">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-base-400">Your Companions</h2>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Your Companions</h2>
           <div className="space-y-2">
             {agentStats.map((agent) => (
               <a
@@ -107,27 +107,27 @@ export default async function ProfilePage() {
               >
                 <div className="flex items-center gap-3">
                   {agent.avatar ? (
-                    <div className="relative h-10 w-10 overflow-hidden rounded-full ring-1 ring-base-500/30">
+                    <div className="relative h-10 w-10 overflow-hidden rounded-full ring-1 ring-[var(--border)]">
                       <Image src={agent.avatar} alt={agent.name} fill className="object-cover" sizes="40px" />
                     </div>
                   ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-base-700 ring-1 ring-base-500/30 text-sm font-bold text-base-200">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--bg-elevated)] ring-1 ring-[var(--border)] text-sm font-bold text-[var(--text-secondary)]">
                       {agent.name[0]}
                     </div>
                   )}
                   <div>
-                    <div className="text-sm font-display font-semibold text-base-100">{agent.name}</div>
-                    <div className="text-xs text-base-400">{agent.archetype.replace(/_/g, " ")}</div>
+                    <div className="text-sm font-display font-semibold text-[var(--text-primary)]">{agent.name}</div>
+                    <div className="text-xs text-[var(--text-muted)]">{agent.archetype.replace(/_/g, " ")}</div>
                   </div>
                 </div>
                 <div className="text-right">
                   {agent.stage !== null ? (
                     <>
-                      <div className="text-sm font-medium text-base-100">{STAGE_NAMES[agent.stage] || "Stranger"}</div>
-                      <div className="text-xs text-base-500">{agent.messageCount} messages</div>
+                      <div className="text-sm font-medium text-[var(--text-primary)]">{STAGE_NAMES[agent.stage] || "Stranger"}</div>
+                      <div className="text-xs text-[var(--text-primary)]0">{agent.messageCount} messages</div>
                     </>
                   ) : (
-                    <span className="text-xs text-base-500">Not started</span>
+                    <span className="text-xs text-[var(--text-primary)]0">Not started</span>
                   )}
                 </div>
               </a>
@@ -136,9 +136,9 @@ export default async function ProfilePage() {
         </section>
 
         {/* Danger Zone */}
-        <section className="border-t border-base-500/30 pt-8">
+        <section className="border-t border-[var(--border)] pt-8">
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-rose-400">Danger Zone</h2>
-          <p className="mb-4 text-sm text-base-300">
+          <p className="mb-4 text-sm text-[var(--text-muted)]">
             Permanently delete your account and all associated data. This action cannot be undone.
           </p>
           <DeleteAccountButton userId={user.id} />

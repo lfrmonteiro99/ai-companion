@@ -1,11 +1,4 @@
-const STAGE_NAMES: Record<number, string> = {
-  0: "Stranger",
-  1: "Curious",
-  2: "Engaged",
-  3: "Invested",
-  4: "Intimate",
-};
-
+const STAGE_NAMES: Record<number, string> = { 0: "Stranger", 1: "Curious", 2: "Engaged", 3: "Invested", 4: "Intimate" };
 const STAGE_DESCRIPTIONS: Record<number, string> = {
   0: "You haven't broken through yet.",
   1: "She's intrigued — something about you caught her attention.",
@@ -14,16 +7,7 @@ const STAGE_DESCRIPTIONS: Record<number, string> = {
   4: "Something deeper has unlocked between you two.",
 };
 
-interface StateData {
-  stage: number;
-  trust: number;
-  comfort: number;
-  tension: number;
-  respect: number;
-  attachment: number;
-  emotionalOpenness: number;
-  interest: number;
-}
+interface StateData { stage: number; trust: number; comfort: number; tension: number; respect: number; attachment: number; emotionalOpenness: number; interest: number; }
 
 function getNarratives(state: StateData): string[] {
   const narratives: string[] = [];
@@ -45,28 +29,20 @@ export default function RelationshipProgress({ state, agentName }: { state: Stat
 
   return (
     <section className="mb-8">
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-base-400">
-        Your Relationship with {agentName}
-      </h2>
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Your Relationship with {agentName}</h2>
       <div className="rounded-xl p-5 surface-1">
         <div className="mb-1 flex items-center justify-between">
-          <span className="text-sm font-medium text-base-50">{stageName}</span>
-          <span className="text-xs text-base-400">Stage {state.stage}/4</span>
+          <span className="text-sm font-medium text-[var(--text-primary)]">{stageName}</span>
+          <span className="text-xs text-[var(--text-faint)]">Stage {state.stage}/4</span>
         </div>
-        <div className="mb-3 h-1.5 rounded-full bg-base-600/60 overflow-hidden">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-[var(--agent-accent)]/60 to-[var(--agent-accent)] transition-all duration-700 shadow-[0_0_8px_var(--agent-glow)]"
-            style={{ width: `${progress}%` }}
-          />
+        <div className="mb-3 h-1.5 rounded-full bg-[var(--bg-elevated)] overflow-hidden">
+          <div className="h-full rounded-full bg-gradient-to-r from-[var(--agent-accent)]/60 to-[var(--agent-accent)] transition-all duration-700 shadow-[0_0_8px_var(--agent-glow)]" style={{ width: `${progress}%` }} />
         </div>
-        <p className="text-sm italic text-base-200">{stageDesc}</p>
-
+        <p className="text-sm italic text-[var(--text-secondary)]">{stageDesc}</p>
         {narratives.length > 0 && (
           <div className="mt-4 space-y-1.5">
             {narratives.map((n) => (
-              <p key={n} className="border-l-2 border-[var(--agent-accent)]/40 pl-3 text-sm italic text-base-200">
-                {n}
-              </p>
+              <p key={n} className="border-l-2 border-[var(--agent-accent)]/40 pl-3 text-sm italic text-[var(--text-secondary)]">{n}</p>
             ))}
           </div>
         )}

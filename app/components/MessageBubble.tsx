@@ -39,7 +39,7 @@ export default function MessageBubble({ role, content, agentName, agentAvatar, t
             <Image src={agentAvatar} alt={agentName || ""} fill className="object-cover" sizes="28px" />
           </div>
         ) : (
-          <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-base-700 ring-1 ring-[var(--agent-accent)]/30 text-[10px] font-bold text-base-300">
+          <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--bg-elevated)] ring-1 ring-[var(--agent-accent)]/30 text-[10px] font-bold text-[var(--text-muted)]">
             {agentName?.[0] || "?"}
           </div>
         )
@@ -48,8 +48,8 @@ export default function MessageBubble({ role, content, agentName, agentAvatar, t
         <div
           className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
             isUser
-              ? "rounded-br-sm bg-gradient-to-br from-indigo-600 to-indigo-500 text-white shadow-[0_2px_12px_rgba(99,102,241,0.25)]"
-              : "rounded-bl-sm bg-base-700/80 backdrop-blur-sm text-base-100 border border-base-500/30"
+              ? "rounded-br-sm bg-[var(--bubble-user-bg)] text-[var(--bubble-user-text)] shadow-[0_2px_12px_rgba(79,70,229,0.2)]"
+              : "rounded-bl-sm bg-[var(--bubble-agent-bg)] text-[var(--bubble-agent-text)] border border-[var(--border)]"
           }`}
         >
           {!isUser && agentName && (
@@ -58,7 +58,7 @@ export default function MessageBubble({ role, content, agentName, agentAvatar, t
           <div className="whitespace-pre-wrap">{content}</div>
         </div>
         {timeStr && (
-          <div className={`mt-0.5 text-[10px] ${isUser ? "text-right" : "text-left"} text-base-400`}>
+          <div className={`mt-0.5 text-[10px] ${isUser ? "text-right" : "text-left"} text-[var(--text-faint)]`}>
             {timeStr}
           </div>
         )}

@@ -45,43 +45,43 @@ export default function ProfileEditor({ userId, initialDisplayName, initialBio, 
 
   return (
     <section className="mb-8">
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-base-400">Your Profile</h2>
-      <p className="mb-4 text-xs text-base-500">
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Your Profile</h2>
+      <p className="mb-4 text-xs text-[var(--text-faint)]">
         Your companions can see this. It helps them start better conversations with you.
       </p>
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-xs font-medium text-base-300">Name</label>
+          <label className="mb-1 block text-xs font-medium text-[var(--text-muted)]">Name</label>
           <input
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="How should they call you?"
             maxLength={100}
-            className="w-full rounded-xl border border-base-500/50 bg-base-700/60 px-3 py-2 text-sm text-base-100 placeholder:text-base-400 focus:outline-none focus:border-mira-500/60 focus:shadow-[0_0_0_3px_rgba(99,102,241,0.2)] transition-all"
+            className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--agent-accent)]/60 focus:shadow-[0_0_0_3px_var(--agent-glow)] transition-all"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-base-300">About you</label>
+          <label className="mb-1 block text-xs font-medium text-[var(--text-muted)]">About you</label>
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             placeholder="A few words about yourself, your vibe, what you're into..."
             maxLength={500}
             rows={3}
-            className="w-full resize-none rounded-xl border border-base-500/50 bg-base-700/60 px-3 py-2 text-sm text-base-100 placeholder:text-base-400 focus:outline-none focus:border-mira-500/60 focus:shadow-[0_0_0_3px_rgba(99,102,241,0.2)] transition-all"
+            className="w-full resize-none rounded-xl border border-[var(--border-strong)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--agent-accent)]/60 focus:shadow-[0_0_0_3px_var(--agent-glow)] transition-all"
           />
-          <div className="mt-1 text-right text-[10px] text-base-500">{bio.length}/500</div>
+          <div className="mt-1 text-right text-[10px] text-[var(--text-faint)]">{bio.length}/500</div>
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-base-300">Interests</label>
+          <label className="mb-1 block text-xs font-medium text-[var(--text-muted)]">Interests</label>
           <div className="mb-2 flex flex-wrap gap-1.5">
             {interests.map((tag) => (
-              <span key={tag} className="flex items-center gap-1 rounded-full bg-base-700/80 px-2.5 py-1 text-xs text-base-200">
+              <span key={tag} className="flex items-center gap-1 rounded-full bg-[var(--bg-elevated)] px-2.5 py-1 text-xs text-[var(--text-secondary)]">
                 {tag}
-                <button onClick={() => removeInterest(tag)} className="text-base-500 hover:text-rose-400 transition-colors">
+                <button onClick={() => removeInterest(tag)} className="text-[var(--text-faint)] hover:text-rose-400 transition-colors">
                   <X size={12} />
                 </button>
               </span>
@@ -96,9 +96,9 @@ export default function ProfileEditor({ userId, initialDisplayName, initialBio, 
                 onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addInterest())}
                 placeholder="Add interest..."
                 maxLength={50}
-                className="flex-1 rounded-xl border border-base-500/50 bg-base-700/60 px-3 py-1.5 text-sm text-base-100 placeholder:text-base-400 focus:outline-none focus:border-mira-500/60 focus:shadow-[0_0_0_3px_rgba(99,102,241,0.2)] transition-all"
+                className="flex-1 rounded-xl border border-[var(--border-strong)] bg-[var(--bg-input)] px-3 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--agent-accent)]/60 focus:shadow-[0_0_0_3px_var(--agent-glow)] transition-all"
               />
-              <button onClick={addInterest} className="rounded-lg px-3 py-1.5 text-sm font-medium text-mira-400 hover:text-mira-300 transition-colors">Add</button>
+              <button onClick={addInterest} className="rounded-lg px-3 py-1.5 text-sm font-medium text-[var(--agent-accent)] hover:brightness-125 transition-colors">Add</button>
             </div>
           )}
         </div>
@@ -106,7 +106,7 @@ export default function ProfileEditor({ userId, initialDisplayName, initialBio, 
         <button
           onClick={handleSave}
           disabled={saving}
-          className="rounded-xl bg-mira-500 px-5 py-2 text-sm font-semibold text-white transition-all hover:brightness-110 hover:shadow-[0_0_12px_rgba(99,102,241,0.3)] disabled:opacity-50"
+          className="rounded-xl bg-[var(--agent-accent)] px-5 py-2 text-sm font-semibold text-white transition-all hover:brightness-110 hover:shadow-[0_0_12px_var(--agent-glow)] disabled:opacity-50"
         >
           {saving ? "Saving..." : saved ? "Saved!" : "Save Profile"}
         </button>

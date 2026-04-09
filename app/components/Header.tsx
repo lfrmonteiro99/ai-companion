@@ -31,31 +31,31 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-base-500/30 px-6 py-4 backdrop-blur-lg bg-base-950/80">
-        <a href="/" className="font-display text-xl font-bold italic bg-gradient-to-r from-base-50 to-base-300 bg-clip-text text-transparent transition-all hover:from-white hover:to-base-200">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[var(--border)] px-6 py-4 backdrop-blur-lg bg-[var(--bg-base)]/80">
+        <a href="/" className="font-display text-xl font-bold italic text-[var(--text-primary)] transition-opacity hover:opacity-80">
           AI Companion
         </a>
         <div className="flex items-center gap-1.5">
           {user ? (
             <>
-              <a href="/profile" className="mr-2 hidden text-xs sm:inline text-base-400 hover:text-base-200 transition-colors">{user.email}</a>
+              <a href="/profile" className="mr-2 hidden text-xs sm:inline text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">{user.email}</a>
               <NotificationBell userId={dbUserId} />
               <button
                 onClick={handleLogout}
-                className="rounded-lg p-2 text-base-400 transition-colors hover:bg-base-700/60 hover:text-rose-400"
+                className="rounded-lg p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-rose-400"
                 title="Sign out"
               >
                 <LogOut size={18} />
               </button>
             </>
           ) : (
-            <a href="/login" className="rounded-lg px-3 py-1.5 text-sm font-medium text-mira-400 transition-colors hover:bg-mira-500/10">
+            <a href="/login" className="rounded-lg px-3 py-1.5 text-sm font-medium text-[var(--agent-accent)] transition-colors hover:bg-[var(--agent-subtle)]">
               Sign in
             </a>
           )}
           <button
             onClick={() => setSettingsOpen(true)}
-            className="rounded-lg p-2 text-base-400 transition-colors hover:bg-base-700/60 hover:text-base-100"
+            className="rounded-lg p-2 text-[var(--text-muted)] transition-colors hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]"
             title="Settings"
           >
             <Settings size={18} />

@@ -52,7 +52,7 @@ export default async function AgentProfilePage({ params }: { params: { agentId: 
     });
   }
 
-  const badgeClass = archetypeBadge[agent.archetype] || "bg-base-600 text-base-300";
+  const badgeClass = archetypeBadge[agent.archetype] || "bg-[var(--bg-elevated)] text-[var(--text-muted)]";
   const themeClass = AGENT_THEME[agent.id] || "";
 
   return (
@@ -70,19 +70,19 @@ export default async function AgentProfilePage({ params }: { params: { agentId: 
               <Image src={agent.avatar} alt={agent.name} fill className="object-cover" sizes="80px" />
             </div>
           ) : (
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-base-700 ring-2 ring-[var(--agent-accent)]/30 text-3xl font-display font-bold text-base-100">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[var(--bg-elevated)] ring-2 ring-[var(--agent-accent)]/30 text-3xl font-display font-bold text-[var(--text-primary)]">
               {agent.name[0]}
             </div>
           )}
           <div>
-            <h1 className="font-display text-2xl font-bold italic text-base-50">{agent.name}</h1>
+            <h1 className="font-display text-2xl font-bold italic text-[var(--text-primary)]">{agent.name}</h1>
             <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium tracking-wide uppercase ${badgeClass}`}>
               {agent.archetype.replace(/_/g, " ")}
             </span>
-            <p className="mt-2 text-sm leading-relaxed text-base-200">{agent.shortBio}</p>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{agent.shortBio}</p>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {agent.vibeTags.map((tag) => (
-                <span key={tag} className="rounded-full bg-base-700/80 px-2.5 py-0.5 text-xs font-medium text-base-300">
+                <span key={tag} className="rounded-full bg-[var(--bg-elevated)]/80 px-2.5 py-0.5 text-xs font-medium text-[var(--text-muted)]">
                   {tag}
                 </span>
               ))}
@@ -105,18 +105,18 @@ export default async function AgentProfilePage({ params }: { params: { agentId: 
 
         {/* Backstory */}
         <section className="mb-8">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-base-400">About</h2>
-          <p className="text-sm leading-relaxed text-base-200">{agent.backstory}</p>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">About</h2>
+          <p className="text-sm leading-relaxed text-[var(--text-secondary)]">{agent.backstory}</p>
         </section>
 
         {/* Personality */}
         <section className="mb-8">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-base-400">Personality</h2>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Personality</h2>
           <div className="grid grid-cols-2 gap-3">
             {Object.entries(agent.coreTraits).map(([trait, value]) => (
               <div key={trait} className="rounded-xl p-3 surface-1">
-                <div className="mb-1.5 text-xs capitalize text-base-300">{trait.replace(/([A-Z])/g, " $1").trim()}</div>
-                <div className="h-1.5 rounded-full bg-base-600/60 overflow-hidden">
+                <div className="mb-1.5 text-xs capitalize text-[var(--text-muted)]">{trait.replace(/([A-Z])/g, " $1").trim()}</div>
+                <div className="h-1.5 rounded-full bg-[var(--bg-elevated)]/60 overflow-hidden">
                   <div
                     className="h-full rounded-full bg-[var(--agent-accent)] transition-all duration-700 shadow-[0_0_8px_var(--agent-glow)]"
                     style={{ width: `${(value as number) * 100}%` }}
@@ -130,20 +130,20 @@ export default async function AgentProfilePage({ params }: { params: { agentId: 
         {/* Values / Dislikes */}
         <section className="mb-8 grid grid-cols-2 gap-6">
           <div>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-base-400">Values</h2>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Values</h2>
             <ul className="space-y-1.5">
               {agent.interactionPreferences.map((p) => (
-                <li key={p} className="flex items-center gap-2 text-sm text-base-200">
+                <li key={p} className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                   <span className="font-bold text-emerald-400">+</span> {p}
                 </li>
               ))}
             </ul>
           </div>
           <div>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-base-400">Dislikes</h2>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Dislikes</h2>
             <ul className="space-y-1.5">
               {agent.dislikes.map((d) => (
-                <li key={d} className="flex items-center gap-2 text-sm text-base-200">
+                <li key={d} className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                   <span className="font-bold text-rose-400">&minus;</span> {d}
                 </li>
               ))}

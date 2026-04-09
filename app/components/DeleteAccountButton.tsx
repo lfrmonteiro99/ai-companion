@@ -35,21 +35,21 @@ export default function DeleteAccountButton({ userId }: { userId: string }) {
 
   return (
     <div className="rounded-xl border border-rose-500/30 p-4 surface-1">
-      <p className="mb-3 text-sm text-base-200">
-        Type <strong className="text-base-50">DELETE</strong> to confirm:
+      <p className="mb-3 text-sm text-[var(--text-secondary)]">
+        Type <strong className="text-[var(--text-primary)]">DELETE</strong> to confirm:
       </p>
       <input
         type="text"
         value={confirmText}
         onChange={(e) => setConfirmText(e.target.value)}
         placeholder="Type DELETE"
-        className="mb-3 w-full rounded-xl border border-base-500/50 bg-base-700/60 px-3 py-2 text-sm text-base-100 placeholder:text-base-400 focus:outline-none focus:border-rose-500/60 focus:shadow-[0_0_0_3px_rgba(225,29,72,0.15)] transition-all"
+        className="mb-3 w-full rounded-xl border border-[var(--border-strong)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-rose-500/60 focus:shadow-[0_0_0_3px_rgba(225,29,72,0.15)] transition-all"
       />
       <div className="flex gap-2">
         <button
           onClick={() => { setShowConfirm(false); setConfirmText(""); }}
           disabled={deleting}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-base-300 hover:text-base-100 transition-colors disabled:opacity-50"
+          className="rounded-xl px-4 py-2 text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
         >
           Cancel
         </button>

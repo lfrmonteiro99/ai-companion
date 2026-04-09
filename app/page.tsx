@@ -41,10 +41,10 @@ export default async function Home() {
       <div className="relative mx-auto max-w-4xl px-6 py-12">
         {/* Hero */}
         <div className="mb-10 text-center">
-          <h1 className="mb-3 font-display text-4xl font-bold italic text-base-50">
+          <h1 className="mb-3 font-display text-4xl font-bold italic text-[var(--text-primary)]">
             Choose Your Companion
           </h1>
-          <p className="mx-auto max-w-md text-base-300">
+          <p className="mx-auto max-w-md text-[var(--text-muted)]">
             Five distinct personalities. Each with her own rhythm, standards, and way of connecting. Who catches your attention?
           </p>
         </div>

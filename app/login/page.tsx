@@ -35,11 +35,11 @@ export default function LoginPage() {
       </div>
 
       <div className="relative mx-auto max-w-sm px-6 py-20">
-        <h1 className="mb-2 font-display text-2xl font-bold italic text-base-50">Welcome back</h1>
-        <p className="mb-8 text-base-300">Pick up where you left off.</p>
+        <h1 className="mb-2 font-display text-2xl font-bold italic text-[var(--text-primary)]">Welcome back</h1>
+        <p className="mb-8 text-[var(--text-muted)]">Pick up where you left off.</p>
 
         {error && (
-          <div className="mb-4 rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-2.5 text-sm text-rose-300">
+          <div className="mb-4 rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-2.5 text-sm text-rose-600 dark:text-rose-300">
             {error}
           </div>
         )}
@@ -47,11 +47,11 @@ export default function LoginPage() {
         <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required
-            className="w-full rounded-xl border border-base-500/50 bg-base-700/60 backdrop-blur-sm px-4 py-3 text-sm text-base-100 placeholder:text-base-400 transition-all focus:outline-none focus:border-mira-500/60 focus:shadow-[0_0_0_3px_rgba(99,102,241,0.2)]"
+            className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--bg-input)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-faint)] transition-all focus:outline-none focus:border-[var(--agent-accent)]/60 focus:shadow-[0_0_0_3px_var(--agent-glow)]"
           />
           <input
             type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required
-            className="w-full rounded-xl border border-base-500/50 bg-base-700/60 backdrop-blur-sm px-4 py-3 text-sm text-base-100 placeholder:text-base-400 transition-all focus:outline-none focus:border-mira-500/60 focus:shadow-[0_0_0_3px_rgba(99,102,241,0.2)]"
+            className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--bg-input)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-faint)] transition-all focus:outline-none focus:border-[var(--agent-accent)]/60 focus:shadow-[0_0_0_3px_var(--agent-glow)]"
           />
           <button
             type="submit" disabled={loading}
@@ -62,14 +62,14 @@ export default function LoginPage() {
         </form>
 
         <div className="my-6 flex items-center gap-3">
-          <div className="flex-1 border-t border-base-500/30" />
-          <span className="text-xs text-base-500">or</span>
-          <div className="flex-1 border-t border-base-500/30" />
+          <div className="flex-1 border-t border-[var(--border)]" />
+          <span className="text-xs text-[var(--text-faint)]">or</span>
+          <div className="flex-1 border-t border-[var(--border)]" />
         </div>
 
         <button
           onClick={handleGoogleLogin}
-          className="w-full rounded-xl border border-base-500/50 bg-base-700/40 py-3 text-sm font-medium text-base-100 transition-all hover:bg-base-600/50 hover:border-base-400/60"
+          className="w-full rounded-xl border border-[var(--border-strong)] bg-[var(--bg-surface)] py-3 text-sm font-medium text-[var(--text-primary)] transition-all hover:bg-[var(--bg-elevated)]"
         >
           <span className="flex items-center justify-center gap-2">
             <svg width="18" height="18" viewBox="0 0 24 24">
@@ -82,8 +82,8 @@ export default function LoginPage() {
           </span>
         </button>
 
-        <p className="mt-6 text-center text-sm text-base-400">
-          Don&apos;t have an account? <a href="/signup" className="text-mira-400 hover:text-mira-300 transition-colors">Sign up</a>
+        <p className="mt-6 text-center text-sm text-[var(--text-muted)]">
+          Don&apos;t have an account? <a href="/signup" className="text-[var(--agent-accent)] hover:brightness-125 transition">Sign up</a>
         </p>
       </div>
     </div>
