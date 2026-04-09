@@ -48,15 +48,18 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
     },
   });
 
-  // 4. Load context in parallel: recent messages + memories
-  const [recentMessages, memories] = await Promise.all([
+  // 4. Load context in parallel: last 30 messages + memories
+  const [recentMessagesDesc, memories] = await Promise.all([
     prisma.message.findMany({
       where: { conversationId: conversation.id },
-      orderBy: { createdAt: "asc" },
-      take: 20,
+      orderBy: { createdAt: "desc" },
+      take: 30,
     }),
     retrieveMemories(userId, agentId, agent),
   ]);
+
+  // Reverse so messages are in chronological order for the LLM
+  const recentMessages = recentMessagesDesc.reverse();
 
   const chatHistory: ChatMessage[] = recentMessages.map((msg) => ({
     role: msg.senderRole as "user" | "assistant",
