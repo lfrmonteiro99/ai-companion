@@ -26,7 +26,7 @@ export default function DeleteAccountButton({ userId }: { userId: string }) {
     return (
       <button
         onClick={() => setShowConfirm(true)}
-        className="rounded-lg border border-red-500 px-4 py-2 text-sm font-medium text-red-500 transition hover:bg-red-500 hover:text-white"
+        className="rounded-xl border border-rose-500/50 px-4 py-2 text-sm font-medium text-rose-400 transition-all hover:bg-rose-500 hover:text-white hover:shadow-[0_0_16px_rgba(225,29,72,0.2)]"
       >
         Delete Account
       </button>
@@ -34,31 +34,29 @@ export default function DeleteAccountButton({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="rounded-lg border border-red-500/30 p-4" style={{ backgroundColor: "var(--bg-secondary)" }}>
-      <p className="mb-3 text-sm" style={{ color: "var(--text-secondary)" }}>
-        Type <strong>DELETE</strong> to confirm:
+    <div className="rounded-xl border border-rose-500/30 p-4 surface-1">
+      <p className="mb-3 text-sm text-base-200">
+        Type <strong className="text-base-50">DELETE</strong> to confirm:
       </p>
       <input
         type="text"
         value={confirmText}
         onChange={(e) => setConfirmText(e.target.value)}
         placeholder="Type DELETE"
-        className="mb-3 w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-        style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-color)", color: "var(--text-primary)" }}
+        className="mb-3 w-full rounded-xl border border-base-500/50 bg-base-700/60 px-3 py-2 text-sm text-base-100 placeholder:text-base-400 focus:outline-none focus:border-rose-500/60 focus:shadow-[0_0_0_3px_rgba(225,29,72,0.15)] transition-all"
       />
       <div className="flex gap-2">
         <button
           onClick={() => { setShowConfirm(false); setConfirmText(""); }}
           disabled={deleting}
-          className="rounded-lg px-4 py-2 text-sm disabled:opacity-50"
-          style={{ color: "var(--text-secondary)" }}
+          className="rounded-xl px-4 py-2 text-sm font-medium text-base-300 hover:text-base-100 transition-colors disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           onClick={handleDelete}
           disabled={confirmText !== "DELETE" || deleting}
-          className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-rose-500 disabled:opacity-50 shadow-[0_0_16px_rgba(225,29,72,0.25)]"
         >
           {deleting ? (
             <>
@@ -68,9 +66,7 @@ export default function DeleteAccountButton({ userId }: { userId: string }) {
               </svg>
               Deleting...
             </>
-          ) : (
-            "Delete My Account"
-          )}
+          ) : "Delete My Account"}
         </button>
       </div>
     </div>

@@ -1,10 +1,13 @@
 "use client";
 
+import Image from "next/image";
+
 interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
   agentName?: string;
   agentAvatar?: string;
+  agentId?: string;
   timestamp?: string;
 }
 
@@ -32,25 +35,30 @@ export default function MessageBubble({ role, content, agentName, agentAvatar, t
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} gap-2`}>
       {!isUser && (
         agentAvatar ? (
-          <img src={agentAvatar} alt={agentName || ""} className="mt-1 h-8 w-8 shrink-0 rounded-full object-cover" />
+          <div className="relative mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full ring-1 ring-[var(--agent-accent)]/30">
+            <Image src={agentAvatar} alt={agentName || ""} fill className="object-cover" sizes="28px" />
+          </div>
         ) : (
-          <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold" style={{ backgroundColor: "var(--bg-tertiary)", color: "var(--text-muted)" }}>
+          <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-base-700 ring-1 ring-[var(--agent-accent)]/30 text-[10px] font-bold text-base-300">
             {agentName?.[0] || "?"}
           </div>
         )
       )}
-      <div className="max-w-[80%]">
+      <div className="max-w-[78%]">
         <div
-          className="rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
-          style={{ backgroundColor: isUser ? "var(--bubble-user)" : "var(--bubble-agent)", color: isUser ? "#ffffff" : "var(--bubble-agent-text)" }}
+          className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+            isUser
+              ? "rounded-br-sm bg-gradient-to-br from-indigo-600 to-indigo-500 text-white shadow-[0_2px_12px_rgba(99,102,241,0.25)]"
+              : "rounded-bl-sm bg-base-700/80 backdrop-blur-sm text-base-100 border border-base-500/30"
+          }`}
         >
           {!isUser && agentName && (
-            <div className="mb-1 text-xs font-medium" style={{ color: "var(--text-muted)" }}>{agentName}</div>
+            <div className="mb-1 text-[10px] font-semibold tracking-widest uppercase text-[var(--agent-accent)]">{agentName}</div>
           )}
           <div className="whitespace-pre-wrap">{content}</div>
         </div>
         {timeStr && (
-          <div className={`mt-0.5 text-[10px] ${isUser ? "text-right" : "text-left"}`} style={{ color: "var(--text-faint)" }}>
+          <div className={`mt-0.5 text-[10px] ${isUser ? "text-right" : "text-left"} text-base-400`}>
             {timeStr}
           </div>
         )}
