@@ -1,25 +1,21 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ThemeProvider from "./components/ThemeProvider";
+import Header from "./components/Header";
 
 export const metadata: Metadata = {
   title: "AI Companion",
   description: "Chat with distinct AI personalities",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body className="min-h-screen">
-        <header className="border-b border-gray-800 px-6 py-4">
-          <a href="/" className="text-xl font-bold text-white">
-            AI Companion
-          </a>
-        </header>
-        <main>{children}</main>
+        <ThemeProvider>
+          <Header />
+          <main>{children}</main>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,38 +1,24 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getAgent } from "@/lib/agents";
 import { prisma } from "@/lib/prisma";
+import { getAuthUser } from "@/lib/supabase/server";
+import { getOrCreateUser } from "@/lib/services/auth";
 import ChatWindow from "@/app/components/ChatWindow";
 
-// Hardcoded test user for MVP — replace with auth later
-const TEST_USERNAME = "test-user";
-
-async function getOrCreateTestUser() {
-  return prisma.user.upsert({
-    where: { username: TEST_USERNAME },
-    update: {},
-    create: { username: TEST_USERNAME },
-  });
-}
-
-export default async function ChatPage({
-  params,
-}: {
-  params: { agentId: string };
-}) {
+export default async function ChatPage({ params }: { params: { agentId: string } }) {
   const agent = getAgent(params.agentId);
   if (!agent) notFound();
 
-  const user = await getOrCreateTestUser();
+  // Get authenticated user
+  const authUser = await getAuthUser();
+  if (!authUser) redirect("/login");
 
-  // Load existing conversation and messages if any
+  const user = await getOrCreateUser(authUser);
+
+  // Load existing conversation and messages
   const conversation = await prisma.conversation.findUnique({
     where: { userId_agentId: { userId: user.id, agentId: agent.id } },
-    include: {
-      messages: {
-        orderBy: { createdAt: "asc" },
-        take: 50,
-      },
-    },
+    include: { messages: { orderBy: { createdAt: "asc" }, take: 50 } },
   });
 
   const initialMessages = (conversation?.messages || []).map((m) => ({
