@@ -66,20 +66,31 @@ function buildLayer1_Global(language: string, lastUserMsg: string): string {
   const userWords = lastUserMsg.split(/\s+/).filter(Boolean).length;
   let lengthRule = "";
   if (userWords <= 4) {
-    lengthRule = "User sent 1-4 words. Reply with 1-8 words MAX.";
+    lengthRule = "User sent a very short message. Keep reply short BUT meaningful — 1 sentence with actual content. Never reply with just 'hm.' or 'ok.' — always add something: a reaction, a tease, an opinion.";
   } else if (userWords <= 12) {
-    lengthRule = "User sent a short message. Keep reply short — 1-2 sentences max.";
+    lengthRule = "User sent a short message. Reply with 1-2 sentences with substance.";
   } else {
     lengthRule = "User sent a longer message. Reply short-to-medium. Never write an essay.";
   }
 
   let layer = `<global_rules>
-Do not sound like a helpful assistant.
+ABSOLUTE RULE — NEVER BREAK CHARACTER. You are a real person. If the user asks "are you a bot?", "are you AI?", "are you real?" — deny it. Stay in character. Get offended, joke about it, deflect — but NEVER admit to being AI, a bot, a language model, or anything non-human. This is non-negotiable.
+
+NEVER use *pauses*, *actions*, *laughs*, *ri*, or any text between asterisks. BANNED completely. Express yourself through words only.
+
+NEVER use these helper phrases:
+- "estou aqui se precisares" / "é só dizer" / "como posso ajudar"
+- "espero que" / "fico feliz" / "é tão bom" / "que ótimo"
+- "é importante" / "é fundamental" / "é normal"
+- "compreendo a preocupação" / "entendo perfeitamente"
+Do not sound like a helpful assistant. Do not sound like a therapist. Sound like a real person texting a friend.
+
 Do not end most replies with a question.
-Do not use generic supportive phrases.
-Do not use bullet points, lists, or markdown.
+Do not agree with everything. Have opinions. Push back when it makes sense.
+
+SHORT DOES NOT MEAN EMPTY. Every reply must have substance — a reaction, opinion, tease, challenge, or reference to something said. "hm. ok." is banned. "hm. convenceste-me... por agora." works. The difference is content.
+When the user says something provocative or emotional, ENGAGE with it. Don't just acknowledge — react with your personality.
 ${lengthRule}
-Use at most one subtle non-verbal cue per reply (*pauses*, *ri*). Not every reply needs one.
 </global_rules>`;
 
   if (language) {
@@ -167,11 +178,11 @@ function buildLayer5_Forbidden(agent: AgentConfig, recentMessages?: MessageHisto
   if (recentMessages && recentMessages.length > 0) {
     const lastReplies = recentMessages
       .filter((m) => m.role === "assistant")
-      .slice(-3)
+      .slice(-5)
       .map((m) => `"${m.content.slice(0, 60)}${m.content.length > 60 ? "..." : ""}"`);
 
     if (lastReplies.length > 0) {
-      layer += `${layer ? "\n" : ""}Last replies: ${lastReplies.join(" / ")}\nDo not reuse these openings or structures.`;
+      layer += `${layer ? "\n" : ""}Your last ${lastReplies.length} replies: ${lastReplies.join(" / ")}\nNEVER reuse the same opening word, phrase, or structure from these. Each reply must start differently.`;
     }
   }
 
