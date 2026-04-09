@@ -4,6 +4,9 @@ import { z } from "zod";
 
 const updateSchema = z.object({
   userId: z.string().uuid(),
+  displayName: z.string().max(100).optional(),
+  bio: z.string().max(500).optional(),
+  interests: z.array(z.string().max(50)).max(10).optional(),
   showMilestones: z.boolean().optional(),
   enableInitiative: z.boolean().optional(),
   quietHoursStart: z.string().optional(),
@@ -27,6 +30,9 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     userId: user.id,
+    displayName: user.displayName,
+    bio: user.bio,
+    interests: user.interests,
     showMilestones: user.showMilestones,
     enableInitiative: user.enableInitiative,
     quietHoursStart: user.quietHoursStart,

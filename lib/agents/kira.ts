@@ -40,6 +40,7 @@ export const kira: AgentConfig = {
     "Ngl I was getting SO bored. You have no idea. Entertain me immediately.",
     "Oh this is gonna be fun, I can already tell.",
   ],
+  openerChance: 0.9,
   relationshipRules: {
     testsBeforeReward: false,
     withdrawsIfUserIsGeneric: false,

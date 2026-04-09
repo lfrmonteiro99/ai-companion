@@ -17,6 +17,12 @@ interface MilestoneEvent {
   label: string;
 }
 
+interface UserProfile {
+  displayName?: string;
+  bio?: string;
+  interests?: string[];
+}
+
 interface ChatWindowProps {
   agentId: string;
   agentName: string;
@@ -26,10 +32,12 @@ interface ChatWindowProps {
   conversationId: string | null;
   showMilestones: boolean;
   openers?: string[];
+  openerChance?: number;
+  userProfile?: UserProfile;
 }
 
 export default function ChatWindow({
-  agentId, agentName, agentAvatar, userId, initialMessages, conversationId: initialConvId, showMilestones: initialShowMilestones, openers,
+  agentId, agentName, agentAvatar, userId, initialMessages, conversationId: initialConvId, showMilestones: initialShowMilestones, openers, openerChance = 0.5, userProfile,
 }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
@@ -46,24 +54,38 @@ export default function ChatWindow({
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, streamingContent, showTyping]);
 
-  // Show agent opener when chat is empty (first time)
+  // Smart opener: agent decides whether to initiate based on personality + user profile
   useEffect(() => {
-    if (initialMessages.length === 0 && openers && openers.length > 0) {
-      const opener = openers[Math.floor(Math.random() * openers.length)];
-      // Simulate typing delay
-      setShowTyping(true);
-      const delay = 1000 + Math.random() * 2000;
-      const timer = setTimeout(() => {
-        setShowTyping(false);
-        setMessages([{
-          id: `opener-${Date.now()}`,
-          senderRole: "assistant",
-          content: opener,
-          createdAt: new Date().toISOString(),
-        }]);
-      }, delay);
-      return () => clearTimeout(timer);
+    if (initialMessages.length > 0 || !openers || openers.length === 0) return;
+
+    // Roll dice against agent's openerChance
+    // Boost chance if user has a filled profile (agents find it more interesting)
+    const hasProfile = userProfile?.bio || (userProfile?.interests && userProfile.interests.length > 0);
+    const effectiveChance = hasProfile ? Math.min(1, openerChance + 0.2) : openerChance;
+
+    if (Math.random() > effectiveChance) return; // Agent doesn't initiate
+
+    // Pick an opener — if user has profile, try to make it profile-aware
+    let opener = openers[Math.floor(Math.random() * openers.length)];
+
+    // If user has interests, sometimes reference one
+    if (userProfile?.interests && userProfile.interests.length > 0 && Math.random() > 0.5) {
+      const interest = userProfile.interests[Math.floor(Math.random() * userProfile.interests.length)];
+      opener = `${opener.replace(/\.$/, "")} — I noticed you're into ${interest}.`;
     }
+
+    setShowTyping(true);
+    const delay = 1500 + Math.random() * 2500;
+    const timer = setTimeout(() => {
+      setShowTyping(false);
+      setMessages([{
+        id: `opener-${Date.now()}`,
+        senderRole: "assistant",
+        content: opener,
+        createdAt: new Date().toISOString(),
+      }]);
+    }, delay);
+    return () => clearTimeout(timer);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleReset() {

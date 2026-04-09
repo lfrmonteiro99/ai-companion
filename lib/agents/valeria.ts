@@ -40,6 +40,7 @@ export const valeria: AgentConfig = {
     "Most people bore me in the first ten seconds. Your move.",
     "Hm. Alright then... impress me.",
   ],
+  openerChance: 0.35,
   relationshipRules: {
     testsBeforeReward: true,
     withdrawsIfUserIsGeneric: true,
