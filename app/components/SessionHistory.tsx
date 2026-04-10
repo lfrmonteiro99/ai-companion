@@ -133,7 +133,7 @@ export default function SessionHistory({ sessions }: SessionHistoryProps) {
                   delay: i * 0.03,
                   ease: [0.34, 1.56, 0.64, 1],
                 }}
-                className="group block rounded-xl border border-base-500/40 bg-base-800/85 backdrop-blur-md shadow-surface-1 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-surface-2 hover:border-base-400/60"
+                className="group block rounded-2xl border border-base-500/40 bg-base-800/85 backdrop-blur-md shadow-surface-1 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-surface-2 hover:border-base-300/60"
               >
                 <div className="flex items-center gap-4 p-4">
                   {/* Agent initial circle */}
@@ -149,9 +149,7 @@ export default function SessionHistory({ sessions }: SessionHistoryProps) {
                       <span className="font-display text-sm font-semibold text-base-50 truncate">
                         {session.agentName}
                       </span>
-                      <span
-                        className={`inline-block shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-medium tracking-wide uppercase ${modeBadge.className}`}
-                      >
+                      <span className={`inline-block shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-medium tracking-wide uppercase ${modeBadge.className}`}>
                         {modeBadge.label}
                       </span>
                       {session.score != null && (
@@ -180,6 +178,9 @@ export default function SessionHistory({ sessions }: SessionHistoryProps) {
                         {session.messageCount}{" "}
                         {session.messageCount === 1 ? "mensagem" : "mensagens"}
                       </span>
+                    </div>
+                    <div className="mt-2 text-[11px] text-base-400 opacity-0 transition-opacity group-hover:opacity-100">
+                      Abrir replay e análise detalhada &rarr;
                     </div>
                   </div>
                 </div>

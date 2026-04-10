@@ -244,7 +244,7 @@ export default function ConversationReplay({
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -4, scale: 0.95 }}
                             transition={{ duration: 0.15 }}
-                            className={`mt-2 rounded-xl border ${IMPACT_BORDER[analysis.impact]} bg-base-800/95 backdrop-blur-md p-3`}
+                            className={`mt-2 rounded-xl border ${IMPACT_BORDER[analysis.impact]} bg-base-800/95 p-3 shadow-surface-1`}
                           >
                             <div className="mb-2 flex items-center justify-between">
                               <span
@@ -314,7 +314,7 @@ export default function ConversationReplay({
           {conversationId && (
             <a
               href={`/analysis/${conversationId}`}
-              className="flex items-center gap-2 rounded-xl bg-indigo-500/15 px-4 py-2 text-xs font-semibold text-indigo-400 ring-1 ring-indigo-500/25 transition-all hover:bg-indigo-500/25 hover:ring-indigo-500/40"
+              className="flex items-center gap-2 rounded-xl bg-indigo-500/15 px-4 py-2 text-xs font-semibold text-indigo-300 ring-1 ring-indigo-500/25 transition-all hover:bg-indigo-500/25 hover:text-indigo-200 hover:ring-indigo-500/40"
             >
               <BarChart3 size={14} />
               Ver Análise Completa
