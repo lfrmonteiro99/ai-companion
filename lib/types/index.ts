@@ -109,7 +109,9 @@ export interface AgentConfig {
 
 export type ScenarioDifficulty = "easy" | "normal" | "hard" | "expert";
 export type ScenarioCategory = "opening" | "sustain" | "recovery" | "rejection" | "flirting" | "transition";
-export type ConversationMode = "practice" | "scenario" | "challenge";
+export type ConversationMode = "practice" | "scenario" | "challenge" | "micro";
+export type MicroExerciseType = "best_reply" | "signal_reading" | "rewrite_message" | "next_question";
+export type MicroExerciseDifficulty = "easy" | "normal" | "hard";
 
 // --- Skill Evaluation ---
 
