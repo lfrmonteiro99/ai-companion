@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { History } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import SessionHistory from "@/app/components/SessionHistory";
+import PageHeader from "@/app/components/ui/PageHeader";
+import { ErrorState } from "@/app/components/ui/StateBlocks";
 
 interface SessionItem {
   conversationId: string;
@@ -88,23 +90,16 @@ export default function HistoryPage() {
 
       <div className="relative mx-auto max-w-3xl px-6 py-10">
         {/* Page header */}
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="mb-8"
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/15 ring-1 ring-indigo-500/25">
-              <History size={20} className="text-indigo-400" />
-            </div>
-            <h1 className="font-display text-2xl font-bold italic text-base-50">
-              Histórico de Sessões
-            </h1>
-          </div>
-          <p className="text-sm text-base-300">
-            Revise suas conversas anteriores e acompanhe sua evolução.
-          </p>
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <PageHeader
+            title="Histórico de Sessões"
+            subtitle="Revise suas conversas anteriores e acompanhe sua evolução."
+            rightSlot={
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/15 ring-1 ring-indigo-500/25">
+                <History size={20} className="text-indigo-400" />
+              </div>
+            }
+          />
         </motion.div>
 
         {/* Loading skeleton */}
@@ -125,12 +120,8 @@ export default function HistoryPage() {
 
         {/* Error state */}
         {error && !loading && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300"
-          >
-            {error}
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <ErrorState message={error} />
           </motion.div>
         )}
 
