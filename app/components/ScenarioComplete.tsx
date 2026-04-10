@@ -326,19 +326,19 @@ export default function ScenarioComplete({
                 className="flex w-full flex-col gap-2.5"
               >
                 <button
-                  onClick={onViewAnalysis}
+                  onClick={success ? onViewAnalysis : onRetry}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--agent-accent)] px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_20px_var(--agent-glow)]"
                 >
-                  <Search size={16} />
-                  Ver Análise Detalhada
+                  {success ? <Search size={16} /> : <RotateCcw size={14} />}
+                  {success ? "Ver Análise Detalhada" : "Tentar Novamente Agora"}
                 </button>
                 <div className="flex gap-2.5">
                   <button
-                    onClick={onRetry}
+                    onClick={success ? onRetry : onViewAnalysis}
                     className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-base-500/40 bg-base-800/60 px-4 py-2.5 text-sm font-medium text-base-200 transition-all duration-200 hover:bg-base-700/80 hover:text-base-50"
                   >
-                    <RotateCcw size={14} />
-                    Tentar Novamente
+                    {success ? <RotateCcw size={14} /> : <Search size={16} />}
+                    {success ? "Tentar Novamente" : "Ver Análise"}
                   </button>
                   <button
                     onClick={onNext}
