@@ -3,7 +3,7 @@ import { getAllAgents } from "@/lib/agents";
 import { getProfileTier } from "@/lib/utils/profile-tier";
 import type { ConversationMode } from "@/lib/types";
 
-type PlanActionType = "continue" | "skill" | "review";
+type PlanActionType = "continue" | "micro" | "skill" | "review";
 
 export interface DashboardAction {
   id: string;
@@ -128,7 +128,19 @@ function scoreFromAttempt(attempt: {
 }
 
 export async function getDashboardViewModel(userId: string): Promise<DashboardViewModel> {
-  const [progress, skillScore, conversations, states, unreadNotifications] =
+  const now = new Date();
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const [
+    progress,
+    skillScore,
+    conversations,
+    states,
+    unreadNotifications,
+    microAttemptsToday,
+    microAttemptsWeek,
+  ] =
     await Promise.all([
       prisma.userProgress.findUnique({ where: { userId } }),
       prisma.userSkillScore.findUnique({ where: { userId } }),
@@ -149,6 +161,12 @@ export async function getDashboardViewModel(userId: string): Promise<DashboardVi
         by: ["agentId"],
         where: { userId, read: false },
         _count: { id: true },
+      }),
+      prisma.microExerciseAttempt.count({
+        where: { userId, createdAt: { gte: dayStart } },
+      }),
+      prisma.microExerciseAttempt.count({
+        where: { userId, createdAt: { gte: weekStart } },
       }),
     ]);
 
@@ -254,6 +272,16 @@ export async function getDashboardViewModel(userId: string): Promise<DashboardVi
       href: continueHref,
     },
     {
+      id: "micro-drill",
+      type: "micro",
+      title: "Run a 60-second micro exercise",
+      description:
+        microAttemptsToday > 0
+          ? `You already completed ${microAttemptsToday} today. Keep the streak alive.`
+          : "Complete one quick drill to lock in daily consistency.",
+      href: "/exercises",
+    },
+    {
       id: "skill-focus",
       type: "skill",
       title: weakestSkillKey ? `Train ${SKILL_LABELS[weakestSkillKey]}` : "Build core communication skills",
@@ -303,6 +331,11 @@ export async function getDashboardViewModel(userId: string): Promise<DashboardVi
   if (insights.length === 0) {
     insights.push("Complete your first session to unlock personalized performance insights.");
   }
+  insights.push(
+    microAttemptsWeek > 0
+      ? `Micro exercises completed in the last 7 days: ${microAttemptsWeek}.`
+      : "No micro exercises this week yet. Try a quick drill from Today's Plan.",
+  );
 
   const switchCharacter = getAllAgents().map((agent) => ({
     agentId: agent.id,
