@@ -26,6 +26,7 @@ model User {
   relationStates    RelationshipState[]
   memories          Memory[]
   notifications     Notification[]
+  scenarioAttempts  ScenarioAttempt[]
 }
 
 model Agent {
@@ -39,19 +40,26 @@ model Agent {
   conversations  Conversation[]
   relationStates RelationshipState[]
   memories       Memory[]
+  attempts       ScenarioAttempt[]
 }
 
 model Conversation {
   id        String    @id @default(uuid())
   userId    String
   agentId   String
+  mode      String    @default("practice")
+  scenarioId String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   user      User      @relation(fields: [userId], references: [id])
   agent     Agent     @relation(fields: [agentId], references: [id])
+  scenario  Scenario? @relation(fields: [scenarioId], references: [id])
   messages  Message[]
+  attempts  ScenarioAttempt[]
 
   @@unique([userId, agentId])
+  @@index([mode, createdAt])
+  @@index([scenarioId])
 }
 
 model Message {
@@ -130,4 +138,50 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId, read, createdAt])
+}
+
+model Scenario {
+  id                String            @id @default(uuid())
+  slug              String            @unique
+  title             String
+  description       String
+  objective         String
+  context           String
+  difficulty        String            @default("normal")
+  category          String
+  maxMessages       Int?
+  timeLimit         Int?
+  unlockRequirement Json?
+  agentConstraints  Json?
+  successCriteria   Json
+  tips              String[]
+  order             Int               @default(0)
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  attempts          ScenarioAttempt[]
+  conversations     Conversation[]
+
+  @@index([isActive, order])
+  @@index([category, difficulty])
+}
+
+model ScenarioAttempt {
+  id             String       @id @default(uuid())
+  userId         String
+  scenarioId     String
+  conversationId String
+  agentId        String
+  status         String       @default("in_progress")
+  score          Json?
+  feedback       Json?
+  completedAt    DateTime?
+  createdAt      DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id])
+  scenario       Scenario     @relation(fields: [scenarioId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  agent          Agent        @relation(fields: [agentId], references: [id])
+
+  @@index([userId, scenarioId])
+  @@index([userId, status])
+  @@index([conversationId])
 }

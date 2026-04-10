@@ -71,3 +71,39 @@ export interface AgentConfig {
   moodBehaviorRules: Record<string, MoodBehaviorRule>;
   stageAdvancementWeights: StageAdvancementWeights;
 }
+
+export type ScenarioDifficulty = "easy" | "normal" | "hard" | "expert";
+export type ScenarioCategory = "opening" | "sustain" | "recovery" | "rejection" | "flirting" | "transition";
+export type ConversationMode = "practice" | "scenario" | "challenge";
+
+export interface ScenarioConfig {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  objective: string;
+  context: string;
+  difficulty: ScenarioDifficulty;
+  category: ScenarioCategory;
+  maxMessages?: number | null;
+  timeLimit?: number | null;
+  unlockRequirement?: Record<string, unknown> | null;
+  agentConstraints?: Record<string, unknown> | null;
+  successCriteria: Record<string, unknown>;
+  tips: string[];
+  order: number;
+  isActive: boolean;
+}
+
+export interface ScenarioAttemptStatus {
+  id: string;
+  userId: string;
+  scenarioId: string;
+  conversationId: string;
+  agentId: string;
+  status: "in_progress" | "completed" | "abandoned";
+  score?: Record<string, unknown> | null;
+  feedback?: Record<string, unknown> | null;
+  completedAt?: string | null;
+  createdAt: string;
+}
