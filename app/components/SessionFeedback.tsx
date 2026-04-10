@@ -261,7 +261,13 @@ export default function SessionFeedback({ feedback }: SessionFeedbackProps) {
           </h3>
           <div className="grid gap-2 text-sm sm:grid-cols-2">
             <p className="text-base-200">Dicas usadas: <span className="font-semibold">{feedback.hintsUsed}</span></p>
+            {typeof feedback.directHintUses === "number" && (
+              <p className="text-base-200">Dicas usadas sem adaptação: <span className="font-semibold">{feedback.directHintUses}</span></p>
+            )}
             <p className="text-base-200">Penalty score: <span className="font-semibold">-{(feedback.hintPenaltyScore ?? 0).toFixed(2)}</span></p>
+            {typeof feedback.directHintPenaltyScore === "number" && (
+              <p className="text-base-200">Penalty score (uso direto): <span className="font-semibold">-{feedback.directHintPenaltyScore.toFixed(2)}</span></p>
+            )}
             <p className="text-base-200">Score bruto: <span className="font-semibold">{feedback.rawOverallScore ?? feedback.overallScore}</span></p>
             <p className="text-base-200">Score final: <span className="font-semibold">{feedback.adjustedOverallScore ?? feedback.overallScore}</span></p>
             {typeof feedback.rawXp === "number" && (
@@ -269,6 +275,9 @@ export default function SessionFeedback({ feedback }: SessionFeedbackProps) {
             )}
             {typeof feedback.adjustedXp === "number" && (
               <p className="text-base-200">XP final: <span className="font-semibold">{feedback.adjustedXp}</span></p>
+            )}
+            {typeof feedback.directHintPenaltyXp === "number" && (
+              <p className="text-base-200">Penalty XP (uso direto): <span className="font-semibold">-{feedback.directHintPenaltyXp}</span></p>
             )}
           </div>
         </motion.section>

@@ -17,8 +17,11 @@ interface ScenarioCompleteProps {
   rawScore?: number;
   rawXp?: number;
   hintsUsed?: number;
+  directHintUses?: number;
   hintPenaltyScore?: number;
+  directHintPenaltyScore?: number;
   hintPenaltyXp?: number;
+  directHintPenaltyXp?: number;
   leveledUp: boolean;
   newLevel?: number;
   achievements: Achievement[];
@@ -95,8 +98,11 @@ export default function ScenarioComplete({
   rawScore,
   rawXp,
   hintsUsed = 0,
+  directHintUses = 0,
   hintPenaltyScore = 0,
+  directHintPenaltyScore = 0,
   hintPenaltyXp = 0,
+  directHintPenaltyXp = 0,
   leveledUp,
   newLevel,
   achievements,
@@ -248,8 +254,9 @@ export default function ScenarioComplete({
               >
                 <p className="mb-1 font-semibold text-base-200">Impacto das dicas</p>
                 <p>Dicas usadas: {hintsUsed}</p>
-                <p>Score bruto/final: {rawScore ?? overallScore} / {overallScore} (-{hintPenaltyScore.toFixed(2)})</p>
-                <p>XP bruto/final: {rawXp ?? xpEarned} / {xpEarned} (-{hintPenaltyXp})</p>
+                <p>Dicas usadas sem adaptação: {directHintUses}</p>
+                <p>Score bruto/final: {rawScore ?? overallScore} / {overallScore} (-{(hintPenaltyScore + directHintPenaltyScore).toFixed(2)})</p>
+                <p>XP bruto/final: {rawXp ?? xpEarned} / {xpEarned} (-{hintPenaltyXp + directHintPenaltyXp})</p>
               </motion.div>
             )}
 

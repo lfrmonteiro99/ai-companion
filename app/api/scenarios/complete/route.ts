@@ -122,6 +122,14 @@ export async function POST(req: NextRequest) {
 
     const progressBefore = await getOrCreateProgress(user.id);
     const hintsUsed = attempt.hintsUsed ?? 0;
+    const conversationMeta = (await prisma.conversation.findUnique({
+      where: { id: attempt.conversationId },
+      select: { sessionMeta: true },
+    }))?.sessionMeta as Record<string, unknown> | null;
+    const directHintUses =
+      conversationMeta && typeof conversationMeta.directHintUses === "number"
+        ? conversationMeta.directHintUses
+        : 0;
 
     // Raw XP before hint penalty
     let rawXp = completionResult.success
@@ -139,6 +147,7 @@ export async function POST(req: NextRequest) {
       rawXp,
       level: progressBefore.level,
       hintsUsed,
+      directHintUses,
       mode: attempt.scenario.difficulty === "expert" ? "challenge" : "scenario",
     });
 
@@ -146,8 +155,11 @@ export async function POST(req: NextRequest) {
     feedback.adjustedOverallScore = adjusted.adjustedScore;
     feedback.overallScore = adjusted.adjustedScore;
     feedback.hintsUsed = adjusted.breakdown.hintsUsed;
+    feedback.directHintUses = adjusted.breakdown.directHintUses;
     feedback.hintPenaltyScore = adjusted.breakdown.scorePenalty;
+    feedback.directHintPenaltyScore = adjusted.breakdown.directScorePenalty;
     feedback.hintPenaltyXp = adjusted.breakdown.xpPenalty;
+    feedback.directHintPenaltyXp = adjusted.breakdown.directXpPenalty;
     feedback.rawXp = adjusted.rawXp;
     feedback.adjustedXp = adjusted.adjustedXp;
 
@@ -168,6 +180,8 @@ export async function POST(req: NextRequest) {
         hintsUsed: adjusted.breakdown.hintsUsed,
         hintPenaltyScore: adjusted.breakdown.scorePenalty,
         hintPenaltyXp: adjusted.breakdown.xpPenalty,
+        directHintPenaltyScore: adjusted.breakdown.directScorePenalty,
+        directHintPenaltyXp: adjusted.breakdown.directXpPenalty,
         rawOverallScore: adjusted.rawScore,
         adjustedOverallScore: adjusted.adjustedScore,
       }

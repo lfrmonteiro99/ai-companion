@@ -83,6 +83,7 @@ export async function POST(req: NextRequest) {
     const progressBefore = await getOrCreateProgress(user.id);
     const sessionMeta = (conversation.sessionMeta as Record<string, unknown> | null) ?? {};
     const hintsUsed = typeof sessionMeta.hintsUsed === "number" ? sessionMeta.hintsUsed : 0;
+    const directHintUses = typeof sessionMeta.directHintUses === "number" ? sessionMeta.directHintUses : 0;
 
     // Raw XP before hint penalty
     let rawXp = XP_REWARDS.completePracticeSession;
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
       rawXp,
       level: progressBefore.level,
       hintsUsed,
+      directHintUses,
       mode: "practice",
     });
 
@@ -104,8 +106,11 @@ export async function POST(req: NextRequest) {
     feedback.adjustedOverallScore = adjusted.adjustedScore;
     feedback.overallScore = adjusted.adjustedScore;
     feedback.hintsUsed = adjusted.breakdown.hintsUsed;
+    feedback.directHintUses = adjusted.breakdown.directHintUses;
     feedback.hintPenaltyScore = adjusted.breakdown.scorePenalty;
+    feedback.directHintPenaltyScore = adjusted.breakdown.directScorePenalty;
     feedback.hintPenaltyXp = adjusted.breakdown.xpPenalty;
+    feedback.directHintPenaltyXp = adjusted.breakdown.directXpPenalty;
     feedback.rawXp = adjusted.rawXp;
     feedback.adjustedXp = adjusted.adjustedXp;
 

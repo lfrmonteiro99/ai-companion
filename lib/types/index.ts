@@ -146,8 +146,11 @@ export interface SessionFeedback {
   rawOverallScore?: number;
   adjustedOverallScore?: number;
   hintsUsed?: number;
+  directHintUses?: number;
   hintPenaltyScore?: number;
+  directHintPenaltyScore?: number;
   hintPenaltyXp?: number;
+  directHintPenaltyXp?: number;
   rawXp?: number;
   adjustedXp?: number;
   skills: SkillScores;

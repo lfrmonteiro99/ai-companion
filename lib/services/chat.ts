@@ -7,6 +7,7 @@ import { checkStageProgression } from "./stage";
 import { retrieveMemories, extractMemories } from "./memory";
 import { updateMood } from "./mood";
 import { ConversationMode, AgentConstraints } from "@/lib/types";
+import { trackDirectHintUse } from "./hint-usage";
 
 export interface SendMessageParams {
   userId: string;
@@ -63,6 +64,7 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
   const mood = await updateMood(userId, agentId, agent);
 
   // 3. Store user message
+  await trackDirectHintUse(conversation.id, message);
   await prisma.message.create({
     data: {
       conversationId: conversation.id,

@@ -196,6 +196,8 @@ export async function completeScenario(
     hintsUsed: number;
     hintPenaltyScore: number;
     hintPenaltyXp: number;
+    directHintPenaltyScore?: number;
+    directHintPenaltyXp?: number;
     rawOverallScore: number;
     adjustedOverallScore: number;
   },
@@ -208,8 +210,14 @@ export async function completeScenario(
       score: score ? JSON.parse(JSON.stringify(score)) : undefined,
       xpEarned: xpEarned ?? (success ? 50 : 10),
       hintsUsed: penalty?.hintsUsed,
-      hintPenaltyScore: penalty?.hintPenaltyScore,
-      hintPenaltyXp: penalty?.hintPenaltyXp,
+      hintPenaltyScore:
+        penalty != null
+          ? penalty.hintPenaltyScore + (penalty.directHintPenaltyScore ?? 0)
+          : undefined,
+      hintPenaltyXp:
+        penalty != null
+          ? penalty.hintPenaltyXp + (penalty.directHintPenaltyXp ?? 0)
+          : undefined,
       rawOverallScore: penalty?.rawOverallScore,
       adjustedOverallScore: penalty?.adjustedOverallScore,
     },

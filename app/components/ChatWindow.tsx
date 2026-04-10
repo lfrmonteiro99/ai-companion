@@ -194,6 +194,7 @@ export default function ChatWindow({
     if (hintLoading) return;
     if (Date.now() < hintCooldownUntil) return;
     setHintLoading(true);
+    setHintData(null);
     setHintError(null);
     try {
       const res = await fetch("/api/chat/hint", {
@@ -535,12 +536,27 @@ export default function ChatWindow({
           </div>
           {(hintData || hintError) && (
             <div className="mx-auto mt-2 max-w-2xl rounded-xl border border-[var(--agent-accent)]/25 bg-[var(--agent-subtle)] p-3 text-xs text-base-200">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-[11px] font-semibold text-[var(--agent-accent)]">
+                  Dica Contextual
+                </p>
+                <button
+                  onClick={() => {
+                    setHintData(null);
+                    setHintError(null);
+                  }}
+                  className="rounded-md p-1 text-base-400 transition-colors hover:bg-base-700/50 hover:text-base-100"
+                  title="Fechar dica"
+                >
+                  <X size={12} />
+                </button>
+              </div>
               {hintError ? (
                 <p className="text-rose-300">{hintError}</p>
               ) : (
                 <>
                   <p className="mb-1 text-[11px] text-base-300">
-                    <span className="font-semibold text-[var(--agent-accent)]">Porque:</span>{" "}
+                    <span className="font-semibold text-[var(--agent-accent)]">Because:</span>{" "}
                     {hintData?.reason}
                   </p>
                   <p className="mb-2 text-sm font-medium text-base-100">{hintData?.hint}</p>
