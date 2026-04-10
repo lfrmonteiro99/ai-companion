@@ -5,6 +5,7 @@ import { getAgent } from "@/lib/agents";
 import { getOrCreateState } from "@/lib/services/relationship";
 import { retrieveMemories } from "@/lib/services/memory";
 import type { ConversationMode } from "@/lib/types";
+import { appendHintSuggestions } from "@/lib/services/hint-usage";
 
 const openai = new OpenAI({ apiKey: config.openaiApiKey });
 
@@ -151,6 +152,9 @@ export async function generateContextualHint(input: GenerateHintInput): Promise<
   };
 
   const hintsUsed = await incrementHintsUsed(input, conversationId);
+  if (conversationId) {
+    await appendHintSuggestions(conversationId, (parsed.suggestions || []).slice(0, 3));
+  }
 
   return {
     reason: parsed.reason || "Tenta ser mais específico e puxar um detalhe da conversa.",

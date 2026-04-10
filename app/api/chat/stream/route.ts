@@ -7,6 +7,7 @@ import { checkStageProgression } from "@/lib/services/stage";
 import { retrieveMemories, extractMemories } from "@/lib/services/memory";
 import { updateMood } from "@/lib/services/mood";
 import { checkMilestones } from "@/lib/services/milestone";
+import { trackDirectHintUse } from "@/lib/services/hint-usage";
 import { config } from "@/lib/config";
 import { z } from "zod";
 import OpenAI from "openai";
@@ -83,6 +84,7 @@ export async function POST(req: NextRequest) {
   await prisma.message.create({
     data: { conversationId: conversation.id, senderRole: "user", content: message },
   });
+  await trackDirectHintUse(conversation.id, message);
 
   // Load last 15 messages (down from 30) + memories
   const [recentMessagesDesc, memories] = await Promise.all([
