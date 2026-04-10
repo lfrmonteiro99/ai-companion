@@ -344,13 +344,14 @@ export default function ChatWindow({
 
         {/* Scenario header */}
         {isScenario && scenarioData && (
-          <div className="flex items-center justify-between border-b border-sky-500/20 bg-sky-500/5 px-4 py-2">
+          <div className="flex items-center justify-between border-b border-sky-500/20 bg-sky-500/8 px-4 py-2.5">
             <div className="flex-1 min-w-0">
+              <p className="text-[10px] uppercase tracking-wider text-sky-400/80">Scenario objective</p>
               <p className="truncate text-xs font-medium text-sky-300">{scenarioData.objective}</p>
             </div>
             <div className="flex items-center gap-3 ml-3 shrink-0">
               {scenarioData.maxMessages && (
-                <span className="text-xs text-base-400">
+                <span className="rounded-full bg-base-800/70 px-2 py-0.5 text-[11px] text-base-300">
                   {userMessageCount}/{scenarioData.maxMessages} msgs
                 </span>
               )}
@@ -371,7 +372,7 @@ export default function ChatWindow({
                   } catch { setScenarioEnding(false); }
                 }}
                 disabled={scenarioEnding}
-                className="rounded-lg px-2.5 py-1 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/10 disabled:opacity-50"
+                className="rounded-lg bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/20 disabled:opacity-50"
               >
                 {scenarioEnding ? "A terminar..." : "Terminar"}
               </button>
@@ -491,10 +492,10 @@ export default function ChatWindow({
         </div>
 
         {/* Input area */}
-        <div className="border-t border-base-500/30 px-4 py-3 backdrop-blur-md bg-base-950/60">
+        <div className="border-t border-base-500/30 px-4 py-2.5 backdrop-blur-md bg-base-950/60">
           {/* Analysis link for practice mode */}
           {!isScenario && messages.length >= 6 && convId && (
-            <div className="mx-auto mb-2 max-w-2xl">
+            <div className="mx-auto max-w-2xl">
               <a
                 href={`/analysis/${convId}`}
                 className="block text-center text-xs text-base-400 transition-colors hover:text-sky-400"
@@ -517,14 +518,14 @@ export default function ChatWindow({
                 {hintLoading ? "A gerar..." : "Dica"}
               </span>
             </button>
-            <input
-              type="text"
+            <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
               placeholder={`Message ${agentName}...`}
               disabled={sending}
-              className="flex-1 rounded-xl border border-base-500/50 bg-base-700/60 backdrop-blur-sm px-4 py-2.5 text-sm text-base-100 placeholder:text-base-400 transition-all duration-200 focus:outline-none focus:border-[var(--agent-accent)]/60 focus:shadow-[0_0_0_3px_var(--agent-glow)] disabled:opacity-50"
+              rows={1}
+              className="flex-1 resize-none rounded-xl border border-base-500/50 bg-base-700/60 px-4 py-2.5 text-sm text-base-100 placeholder:text-base-400 transition-all duration-200 focus:outline-none focus:border-[var(--agent-accent)]/60 focus:shadow-[0_0_0_3px_var(--agent-glow)] disabled:opacity-50"
             />
             <button
               onClick={handleSend}
@@ -535,7 +536,7 @@ export default function ChatWindow({
             </button>
           </div>
           {(hintData || hintError) && (
-            <div className="mx-auto mt-2 max-w-2xl rounded-xl border border-[var(--agent-accent)]/25 bg-[var(--agent-subtle)] p-3 text-xs text-base-200">
+            <div className="mx-auto mt-2 max-w-2xl rounded-xl border border-[var(--agent-accent)]/25 bg-[var(--agent-subtle)] p-3 text-xs text-base-200 shadow-surface-1">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-[11px] font-semibold text-[var(--agent-accent)]">
                   Dica Contextual
