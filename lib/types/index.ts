@@ -107,6 +107,10 @@ export interface AgentConfig {
   responsePatterns: ResponsePatterns;
 }
 
+export type ScenarioDifficulty = "easy" | "normal" | "hard" | "expert";
+export type ScenarioCategory = "opening" | "sustain" | "recovery" | "rejection" | "flirting" | "transition";
+export type ConversationMode = "practice" | "scenario" | "challenge";
+
 // --- Skill Evaluation ---
 
 export interface SkillScores {
@@ -161,8 +165,8 @@ export interface ScenarioData {
   description: string;
   objective: string;
   context: string;
-  difficulty: "easy" | "normal" | "hard" | "expert";
-  category: "opening" | "sustain" | "recovery" | "rejection" | "flirting" | "transition";
+  difficulty: ScenarioDifficulty;
+  category: ScenarioCategory;
   maxMessages?: number;
   timeLimit?: number;
   unlockRequirement?: { minLevel: number };
@@ -200,5 +204,3 @@ export interface Achievement {
   condition: string;
   icon: string;
 }
-
-export type ConversationMode = "practice" | "scenario" | "challenge";
