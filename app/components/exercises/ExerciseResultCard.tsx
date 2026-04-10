@@ -30,16 +30,25 @@ export default function ExerciseResultCard({
       <p className={`text-sm font-semibold ${isCorrect ? "text-emerald-400" : "text-amber-400"}`}>
         {isCorrect ? "Strong answer" : "Room to improve"}
       </p>
-      <p className="mt-1 text-base-200">Adjusted score: {Math.round(adjustedScore)}</p>
-      <p className="text-base-200">XP gained: {finalXpAwarded}</p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <span className="rounded-full bg-base-700/80 px-2.5 py-1 text-xs text-base-100">
+          Score {Math.round(adjustedScore)}
+        </span>
+        <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs text-emerald-300">
+          +{finalXpAwarded} XP
+        </span>
+      </div>
       {explanation && <p className="mt-2 text-sm text-base-300">{explanation}</p>}
-      <p className="mt-3 text-xs text-base-400">
-        Penalties: hints {penalties.hintsUsed}, direct hint use {penalties.directHintUses}, score -
-        {penalties.scorePenalty.toFixed(1)}, xp -{penalties.xpPenalty}
-      </p>
-      <p className="text-xs text-base-400">
-        Bonuses: no-hint +{bonuses.noHintBonus}, first-today +{bonuses.firstTodayBonus}
-      </p>
+      <details className="mt-3 rounded-lg bg-base-700/40 px-3 py-2 text-xs text-base-300">
+        <summary className="cursor-pointer text-base-200">Penalty and bonus breakdown</summary>
+        <p className="mt-2">
+          Penalties: hints {penalties.hintsUsed}, direct hint use {penalties.directHintUses}, score -
+          {penalties.scorePenalty.toFixed(1)}, xp -{penalties.xpPenalty}
+        </p>
+        <p className="mt-1">
+          Bonuses: no-hint +{bonuses.noHintBonus}, first-today +{bonuses.firstTodayBonus}
+        </p>
+      </details>
     </section>
   );
 }

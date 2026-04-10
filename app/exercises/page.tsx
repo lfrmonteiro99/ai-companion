@@ -47,12 +47,14 @@ interface SubmitResponse {
 }
 
 export default function ExercisesPage() {
+  const DAILY_PACK_TARGET = 5;
   const [exercise, setExercise] = useState<ExerciseData | null>(null);
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState<SubmitResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [completedCount, setCompletedCount] = useState(0);
 
   const loadNext = useCallback(async () => {
     setLoading(true);
@@ -96,6 +98,7 @@ export default function ExercisesPage() {
         throw new Error(data.error || "Failed to submit answer");
       }
       setResult(data);
+      setCompletedCount((current) => Math.min(DAILY_PACK_TARGET, current + 1));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unexpected error");
     } finally {
@@ -110,6 +113,20 @@ export default function ExercisesPage() {
           title="Micro Exercises"
           subtitle="One-question practice drills with instant feedback and XP."
         />
+        <div className="mb-4 rounded-xl border border-base-500/40 bg-base-800/70 px-4 py-3">
+          <div className="mb-1 flex items-center justify-between text-xs text-base-300">
+            <span>Daily quick pack</span>
+            <span>
+              {completedCount}/{DAILY_PACK_TARGET}
+            </span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-base-700">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-mira-500 to-emerald-400"
+              style={{ width: `${(completedCount / DAILY_PACK_TARGET) * 100}%` }}
+            />
+          </div>
+        </div>
 
         {loading && <SkeletonState />}
         {error && <ErrorState message={error} />}
@@ -161,6 +178,7 @@ export default function ExercisesPage() {
               <AppButton
                 onClick={loadNext}
                 variant="primary"
+                className="w-full sm:w-auto"
               >
                 Next exercise
               </AppButton>
