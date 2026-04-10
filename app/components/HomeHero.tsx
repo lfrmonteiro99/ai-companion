@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Flame, Star, TrendingUp } from "lucide-react";
+import { getProfileTier } from "@/lib/utils/profile-tier";
 
 interface HomeHeroProps {
   level: number;
@@ -13,6 +14,7 @@ interface HomeHeroProps {
 
 export default function HomeHero({ level, xp, xpToNextLevel, streakDays, overallScore }: HomeHeroProps) {
   const xpProgress = xpToNextLevel > 0 ? Math.min((xp / xpToNextLevel) * 100, 100) : 100;
+  const tier = getProfileTier(level);
 
   return (
     <motion.div
@@ -35,6 +37,7 @@ export default function HomeHero({ level, xp, xpToNextLevel, streakDays, overall
         <div className="flex items-center gap-2 rounded-full border border-base-500/40 bg-base-800/85 px-4 py-2 backdrop-blur-md shadow-surface-1">
           <Star size={14} className="text-amber-400" />
           <span className="text-xs font-semibold text-base-100">Nível {level}</span>
+          <span className="text-[10px] text-base-400">• {tier.label}</span>
         </div>
 
         {/* XP mini-bar */}

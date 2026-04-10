@@ -51,6 +51,7 @@ model Conversation {
   agentId   String
   mode      String    @default("practice")
   scenarioId String?
+  sessionMeta Json?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   user      User      @relation(fields: [userId], references: [id])
@@ -178,6 +179,11 @@ model ScenarioAttempt {
   score          Json?
   feedback       Json?
   xpEarned       Int          @default(0)
+  hintsUsed      Int          @default(0)
+  hintPenaltyScore Float      @default(0)
+  hintPenaltyXp  Int          @default(0)
+  rawOverallScore Float?
+  adjustedOverallScore Float?
   completedAt    DateTime?
   createdAt      DateTime     @default(now())
   user           User         @relation(fields: [userId], references: [id])

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Zap, Star, Check } from "lucide-react";
+import { getProfileTier } from "@/lib/utils/profile-tier";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,6 +36,7 @@ export default function XPGainToast({
 }: XPGainToastProps) {
   const [visible, setVisible] = useState(true);
   const [progress, setProgress] = useState(100);
+  const newTier = newLevel ? getProfileTier(newLevel) : null;
 
   // Auto-dismiss countdown
   useEffect(() => {
@@ -119,6 +121,11 @@ export default function XPGainToast({
                   <span className="text-sm font-semibold text-amber-300">
                     Nivel {newLevel}!
                   </span>
+                  {newTier && (
+                    <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-200 ring-1 ring-amber-500/20">
+                      {newTier.label}
+                    </span>
+                  )}
                 </motion.div>
               )}
 

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Trophy, Flame, Target, MessageCircle, TrendingUp, Zap } from "lucide-react";
+import { getProfileTier } from "@/lib/utils/profile-tier";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -110,6 +111,7 @@ export default function ProgressDashboard({ progress, skills }: ProgressDashboar
   const xpInCurrentLevel = Math.max(0, progress.xp - currentLevelFloor);
   const xpSpan = Math.max(1, nextLevelTarget - currentLevelFloor);
   const xpPercent = Math.min(100, Math.round((xpInCurrentLevel / xpSpan) * 100));
+  const tier = getProfileTier(progress.level);
 
   return (
     <div className="space-y-6">
@@ -132,6 +134,9 @@ export default function ProgressDashboard({ progress, skills }: ProgressDashboar
               <h2 className="font-display text-lg font-semibold text-base-50">
                 Nivel {progress.level}
               </h2>
+              <span className="rounded-full bg-base-700/70 px-2 py-0.5 text-[10px] font-medium tracking-wide text-base-300 ring-1 ring-base-500/40">
+                {tier.label}
+              </span>
               {progress.streakDays > 0 && (
                 <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-400 ring-1 ring-amber-500/25">
                   <Flame size={12} />

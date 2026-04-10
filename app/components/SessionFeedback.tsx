@@ -248,6 +248,32 @@ export default function SessionFeedback({ feedback }: SessionFeedbackProps) {
         </p>
       </motion.section>
 
+      {/* Hint penalty breakdown */}
+      {typeof feedback.hintsUsed === "number" && (
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.18 }}
+          className="rounded-xl border border-base-500/40 bg-base-800/85 p-5 backdrop-blur-md"
+        >
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-widest text-base-400">
+            Impacto das Dicas
+          </h3>
+          <div className="grid gap-2 text-sm sm:grid-cols-2">
+            <p className="text-base-200">Dicas usadas: <span className="font-semibold">{feedback.hintsUsed}</span></p>
+            <p className="text-base-200">Penalty score: <span className="font-semibold">-{(feedback.hintPenaltyScore ?? 0).toFixed(2)}</span></p>
+            <p className="text-base-200">Score bruto: <span className="font-semibold">{feedback.rawOverallScore ?? feedback.overallScore}</span></p>
+            <p className="text-base-200">Score final: <span className="font-semibold">{feedback.adjustedOverallScore ?? feedback.overallScore}</span></p>
+            {typeof feedback.rawXp === "number" && (
+              <p className="text-base-200">XP bruto: <span className="font-semibold">{feedback.rawXp}</span></p>
+            )}
+            {typeof feedback.adjustedXp === "number" && (
+              <p className="text-base-200">XP final: <span className="font-semibold">{feedback.adjustedXp}</span></p>
+            )}
+          </div>
+        </motion.section>
+      )}
+
       {/* Skills grid */}
       <motion.section
         initial={{ opacity: 0, y: 16 }}

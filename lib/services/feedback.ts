@@ -283,7 +283,13 @@ export async function saveFeedback(
       where: { id: attemptId },
       data: {
         feedback: JSON.parse(JSON.stringify(feedback)),
-        score: JSON.parse(JSON.stringify(feedback.skills)),
+        score: JSON.parse(
+          JSON.stringify({
+            overallScore: feedback.adjustedOverallScore ?? feedback.overallScore,
+            rawOverallScore: feedback.rawOverallScore ?? feedback.overallScore,
+            skills: feedback.skills,
+          }),
+        ),
       },
     });
   } catch (error) {

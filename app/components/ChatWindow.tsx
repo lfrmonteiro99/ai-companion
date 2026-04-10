@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw, Settings as SettingsIcon, X, Send, ArrowLeft } from "lucide-react";
+import { RotateCcw, Settings as SettingsIcon, X, Send, Lightbulb } from "lucide-react";
 import Image from "next/image";
 import MessageBubble from "./MessageBubble";
 import SettingsDrawer from "./SettingsDrawer";
@@ -31,6 +31,13 @@ interface ScenarioInfo {
   objective: string;
   maxMessages?: number | null;
   timeLimit?: number | null;
+}
+
+interface HintPayload {
+  hint: string;
+  reason: string;
+  suggestions: string[];
+  hintsUsed: number;
 }
 
 interface ChatWindowProps {
@@ -74,6 +81,10 @@ export default function ChatWindow({
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [hasMore, setHasMore] = useState(initialMessages.length >= 50);
   const [scenarioEnding, setScenarioEnding] = useState(false);
+  const [hintLoading, setHintLoading] = useState(false);
+  const [hintData, setHintData] = useState<HintPayload | null>(null);
+  const [hintError, setHintError] = useState<string | null>(null);
+  const [hintCooldownUntil, setHintCooldownUntil] = useState<number>(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -177,6 +188,38 @@ export default function ChatWindow({
       setShowTyping(false);
       setMessages((p) => [...p, { id: `e-${Date.now()}`, senderRole: "assistant", content: "Something went wrong. Try again.", createdAt: new Date().toISOString() }]);
     } finally { setSending(false); }
+  }
+
+  async function handleHint() {
+    if (hintLoading) return;
+    if (Date.now() < hintCooldownUntil) return;
+    setHintLoading(true);
+    setHintError(null);
+    try {
+      const res = await fetch("/api/chat/hint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          agentId,
+          mode,
+          scenarioId: scenarioData?.id,
+          attemptId,
+          conversationId: convId || undefined,
+          draftMessage: input.trim() || undefined,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error("Nao foi possivel gerar dica.");
+      }
+      const data = (await res.json()) as HintPayload;
+      setHintData(data);
+      setHintCooldownUntil(Date.now() + 5000);
+    } catch (error) {
+      setHintError(error instanceof Error ? error.message : "Erro ao gerar dica.");
+    } finally {
+      setHintLoading(false);
+    }
   }
 
   const themeClass = AGENT_THEME[agentId] || "";
@@ -462,6 +505,17 @@ export default function ChatWindow({
         </div>
         <div className="border-t border-base-500/30 px-4 py-3 backdrop-blur-md bg-base-950/60">
           <div className="mx-auto flex max-w-2xl gap-2">
+            <button
+              onClick={handleHint}
+              disabled={hintLoading || sending || Date.now() < hintCooldownUntil}
+              className="rounded-xl border border-[var(--agent-accent)]/40 bg-[var(--agent-accent)]/10 px-3 py-2.5 text-xs font-semibold text-[var(--agent-accent)] transition-all duration-200 hover:bg-[var(--agent-accent)]/20 disabled:opacity-40"
+              title="Pedir uma dica contextual"
+            >
+              <span className="flex items-center gap-1.5">
+                <Lightbulb size={14} />
+                {hintLoading ? "A gerar..." : "Dica"}
+              </span>
+            </button>
             <input
               type="text"
               value={input}
@@ -479,6 +533,31 @@ export default function ChatWindow({
               <Send size={18} />
             </button>
           </div>
+          {(hintData || hintError) && (
+            <div className="mx-auto mt-2 max-w-2xl rounded-xl border border-[var(--agent-accent)]/25 bg-[var(--agent-subtle)] p-3 text-xs text-base-200">
+              {hintError ? (
+                <p className="text-rose-300">{hintError}</p>
+              ) : (
+                <>
+                  <p className="mb-1 text-[11px] text-base-300">
+                    <span className="font-semibold text-[var(--agent-accent)]">Porque:</span>{" "}
+                    {hintData?.reason}
+                  </p>
+                  <p className="mb-2 text-sm font-medium text-base-100">{hintData?.hint}</p>
+                  <ul className="space-y-1">
+                    {hintData?.suggestions?.map((s, i) => (
+                      <li key={`${i}-${s}`} className="rounded-lg bg-base-800/50 px-2 py-1">
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-2 text-[10px] text-base-400">
+                    Dicas usadas nesta sessao: {hintData?.hintsUsed ?? 0}
+                  </p>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </>
