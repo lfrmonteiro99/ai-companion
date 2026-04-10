@@ -202,6 +202,7 @@ function SkillBar({
 // ---------------------------------------------------------------------------
 export default function SessionFeedback({ feedback }: SessionFeedbackProps) {
   const skillEntries = Object.entries(feedback.skills) as [string, number][];
+  const topImprovements = feedback.improvements.slice(0, 3);
 
   return (
     <div className="space-y-8">
@@ -247,6 +248,30 @@ export default function SessionFeedback({ feedback }: SessionFeedbackProps) {
           {feedback.summary}
         </p>
       </motion.section>
+
+      {/* Next actions first */}
+      {topImprovements.length > 0 && (
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.16 }}
+          className="rounded-xl border border-base-500/40 bg-base-800/85 p-5 backdrop-blur-md"
+        >
+          <div className="mb-3 flex items-center gap-2">
+            <Target size={16} className="text-emerald-400" />
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-base-400">
+              Next Actions
+            </h3>
+          </div>
+          <ul className="space-y-2">
+            {topImprovements.map((tip, i) => (
+              <li key={i} className="rounded-lg bg-base-700/40 px-3 py-2 text-sm text-base-200">
+                {tip}
+              </li>
+            ))}
+          </ul>
+        </motion.section>
+      )}
 
       {/* Hint penalty breakdown */}
       {typeof feedback.hintsUsed === "number" && (
@@ -369,8 +394,8 @@ export default function SessionFeedback({ feedback }: SessionFeedbackProps) {
         </motion.section>
       )}
 
-      {/* Improvements */}
-      {feedback.improvements.length > 0 && (
+      {/* Full improvements list */}
+      {feedback.improvements.length > 3 && (
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -384,7 +409,7 @@ export default function SessionFeedback({ feedback }: SessionFeedbackProps) {
             </h3>
           </div>
           <ol className="space-y-3">
-            {feedback.improvements.map((tip, i) => (
+            {feedback.improvements.slice(3).map((tip, i) => (
               <motion.li
                 key={i}
                 initial={{ opacity: 0, x: -8 }}
