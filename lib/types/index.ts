@@ -143,6 +143,13 @@ export interface KeyMoment {
 
 export interface SessionFeedback {
   overallScore: number;
+  rawOverallScore?: number;
+  adjustedOverallScore?: number;
+  hintsUsed?: number;
+  hintPenaltyScore?: number;
+  hintPenaltyXp?: number;
+  rawXp?: number;
+  adjustedXp?: number;
   skills: SkillScores;
   perception: string;
   summary: string;

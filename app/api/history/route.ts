@@ -65,6 +65,7 @@ export async function GET(req: NextRequest) {
               conversationId: true,
               score: true,
               status: true,
+              adjustedOverallScore: true,
             },
           })
         : [];
@@ -72,6 +73,19 @@ export async function GET(req: NextRequest) {
     // Build a map of conversationId -> best attempt score
     const attemptScoreMap = new Map<string, number | null>();
     for (const attempt of attempts) {
+      if (attempt.status === "completed") {
+        const adjustedFromField =
+          typeof attempt.adjustedOverallScore === "number"
+            ? attempt.adjustedOverallScore
+            : null;
+        if (adjustedFromField !== null) {
+          const existing = attemptScoreMap.get(attempt.conversationId);
+          if (existing === null || existing === undefined || adjustedFromField > existing) {
+            attemptScoreMap.set(attempt.conversationId, adjustedFromField);
+          }
+          continue;
+        }
+      }
       if (attempt.status === "completed" && attempt.score) {
         const scoreObj = attempt.score as Record<string, unknown>;
         const overallScore =

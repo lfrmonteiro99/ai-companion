@@ -192,6 +192,13 @@ export async function completeScenario(
   success: boolean,
   score?: Record<string, unknown>,
   xpEarned?: number,
+  penalty?: {
+    hintsUsed: number;
+    hintPenaltyScore: number;
+    hintPenaltyXp: number;
+    rawOverallScore: number;
+    adjustedOverallScore: number;
+  },
 ): Promise<ScenarioAttempt> {
   return prisma.scenarioAttempt.update({
     where: { id: attemptId },
@@ -200,6 +207,11 @@ export async function completeScenario(
       completedAt: new Date(),
       score: score ? JSON.parse(JSON.stringify(score)) : undefined,
       xpEarned: xpEarned ?? (success ? 50 : 10),
+      hintsUsed: penalty?.hintsUsed,
+      hintPenaltyScore: penalty?.hintPenaltyScore,
+      hintPenaltyXp: penalty?.hintPenaltyXp,
+      rawOverallScore: penalty?.rawOverallScore,
+      adjustedOverallScore: penalty?.adjustedOverallScore,
     },
   });
 }

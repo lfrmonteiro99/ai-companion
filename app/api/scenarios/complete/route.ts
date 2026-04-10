@@ -12,9 +12,11 @@ import {
   updateStreak,
   checkAchievements,
   XP_REWARDS,
+  getOrCreateProgress,
 } from "@/lib/services/progression";
 import { getAgent } from "@/lib/agents";
 import type { SuccessCriteria } from "@/lib/types";
+import { computeFinalScoreAndXp } from "@/lib/services/scoring";
 
 const completeSchema = z.object({
   attemptId: z.string(),
@@ -118,6 +120,37 @@ export async function POST(req: NextRequest) {
       scenarioContext
     );
 
+    const progressBefore = await getOrCreateProgress(user.id);
+    const hintsUsed = attempt.hintsUsed ?? 0;
+
+    // Raw XP before hint penalty
+    let rawXp = completionResult.success
+      ? XP_REWARDS.completeScenario
+      : XP_REWARDS.completePracticeSession;
+
+    if (feedback.overallScore >= 90) {
+      rawXp += XP_REWARDS.scoreAbove90;
+    } else if (feedback.overallScore >= 70) {
+      rawXp += XP_REWARDS.scoreAbove70;
+    }
+
+    const adjusted = computeFinalScoreAndXp({
+      rawScore: feedback.overallScore,
+      rawXp,
+      level: progressBefore.level,
+      hintsUsed,
+      mode: attempt.scenario.difficulty === "expert" ? "challenge" : "scenario",
+    });
+
+    feedback.rawOverallScore = adjusted.rawScore;
+    feedback.adjustedOverallScore = adjusted.adjustedScore;
+    feedback.overallScore = adjusted.adjustedScore;
+    feedback.hintsUsed = adjusted.breakdown.hintsUsed;
+    feedback.hintPenaltyScore = adjusted.breakdown.scorePenalty;
+    feedback.hintPenaltyXp = adjusted.breakdown.xpPenalty;
+    feedback.rawXp = adjusted.rawXp;
+    feedback.adjustedXp = adjusted.adjustedXp;
+
     // Save feedback to the attempt
     await saveFeedback(attemptId, feedback);
 
@@ -125,29 +158,27 @@ export async function POST(req: NextRequest) {
     await completeScenario(
       attemptId,
       completionResult.success,
-      feedback.skills as unknown as Record<string, unknown>,
-      completionResult.success
-        ? XP_REWARDS.completeScenario
-        : XP_REWARDS.completePracticeSession
+      {
+        overallScore: adjusted.adjustedScore,
+        rawOverallScore: adjusted.rawScore,
+        skills: feedback.skills,
+      } as unknown as Record<string, unknown>,
+      adjusted.adjustedXp,
+      {
+        hintsUsed: adjusted.breakdown.hintsUsed,
+        hintPenaltyScore: adjusted.breakdown.scorePenalty,
+        hintPenaltyXp: adjusted.breakdown.xpPenalty,
+        rawOverallScore: adjusted.rawScore,
+        adjustedOverallScore: adjusted.adjustedScore,
+      }
     );
 
     // Update global skill scores
     await updateGlobalSkillScores(user.id, sessionScores);
 
-    // Award XP
-    let xpAmount = completionResult.success
-      ? XP_REWARDS.completeScenario
-      : XP_REWARDS.completePracticeSession;
-
-    if (feedback.overallScore >= 90) {
-      xpAmount += XP_REWARDS.scoreAbove90;
-    } else if (feedback.overallScore >= 70) {
-      xpAmount += XP_REWARDS.scoreAbove70;
-    }
-
     const { leveledUp, newLevel } = await awardXP(
       user.id,
-      xpAmount,
+      adjusted.adjustedXp,
       `scenario:${scenario.slug}`
     );
 
@@ -187,7 +218,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       feedback,
-      xp: xpAmount,
+      xp: adjusted.adjustedXp,
+      rawXp: adjusted.rawXp,
+      hintPenaltyXp: adjusted.breakdown.xpPenalty,
       leveledUp,
       newLevel,
       achievements,

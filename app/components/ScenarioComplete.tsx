@@ -14,6 +14,11 @@ interface ScenarioCompleteProps {
   success: boolean;
   overallScore: number;
   xpEarned: number;
+  rawScore?: number;
+  rawXp?: number;
+  hintsUsed?: number;
+  hintPenaltyScore?: number;
+  hintPenaltyXp?: number;
   leveledUp: boolean;
   newLevel?: number;
   achievements: Achievement[];
@@ -87,6 +92,11 @@ export default function ScenarioComplete({
   success,
   overallScore,
   xpEarned,
+  rawScore,
+  rawXp,
+  hintsUsed = 0,
+  hintPenaltyScore = 0,
+  hintPenaltyXp = 0,
   leveledUp,
   newLevel,
   achievements,
@@ -226,6 +236,20 @@ export default function ScenarioComplete({
                 <span className="text-lg font-bold text-amber-400">
                   +{xpEarned} XP
                 </span>
+              </motion.div>
+            )}
+
+            {showContent && hintsUsed > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.9, duration: 0.3 }}
+                className="mb-4 w-full rounded-xl border border-base-500/30 bg-base-800/60 px-4 py-3 text-left text-xs text-base-300"
+              >
+                <p className="mb-1 font-semibold text-base-200">Impacto das dicas</p>
+                <p>Dicas usadas: {hintsUsed}</p>
+                <p>Score bruto/final: {rawScore ?? overallScore} / {overallScore} (-{hintPenaltyScore.toFixed(2)})</p>
+                <p>XP bruto/final: {rawXp ?? xpEarned} / {xpEarned} (-{hintPenaltyXp})</p>
               </motion.div>
             )}
 

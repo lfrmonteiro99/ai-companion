@@ -11,8 +11,10 @@ import {
   updateStreak,
   checkAchievements,
   XP_REWARDS,
+  getOrCreateProgress,
 } from "@/lib/services/progression";
 import { getAgent } from "@/lib/agents";
+import { computeFinalScoreAndXp } from "@/lib/services/scoring";
 
 const evaluateSchema = z.object({
   conversationId: z.string(),
@@ -78,17 +80,38 @@ export async function POST(req: NextRequest) {
     // Update global skill scores
     await updateGlobalSkillScores(user.id, sessionScores);
 
-    // Award XP
-    let xpAmount = XP_REWARDS.completePracticeSession;
+    const progressBefore = await getOrCreateProgress(user.id);
+    const sessionMeta = (conversation.sessionMeta as Record<string, unknown> | null) ?? {};
+    const hintsUsed = typeof sessionMeta.hintsUsed === "number" ? sessionMeta.hintsUsed : 0;
+
+    // Raw XP before hint penalty
+    let rawXp = XP_REWARDS.completePracticeSession;
     if (feedback.overallScore >= 90) {
-      xpAmount += XP_REWARDS.scoreAbove90;
+      rawXp += XP_REWARDS.scoreAbove90;
     } else if (feedback.overallScore >= 70) {
-      xpAmount += XP_REWARDS.scoreAbove70;
+      rawXp += XP_REWARDS.scoreAbove70;
     }
+
+    const adjusted = computeFinalScoreAndXp({
+      rawScore: feedback.overallScore,
+      rawXp,
+      level: progressBefore.level,
+      hintsUsed,
+      mode: "practice",
+    });
+
+    feedback.rawOverallScore = adjusted.rawScore;
+    feedback.adjustedOverallScore = adjusted.adjustedScore;
+    feedback.overallScore = adjusted.adjustedScore;
+    feedback.hintsUsed = adjusted.breakdown.hintsUsed;
+    feedback.hintPenaltyScore = adjusted.breakdown.scorePenalty;
+    feedback.hintPenaltyXp = adjusted.breakdown.xpPenalty;
+    feedback.rawXp = adjusted.rawXp;
+    feedback.adjustedXp = adjusted.adjustedXp;
 
     const { leveledUp, newLevel } = await awardXP(
       user.id,
-      xpAmount,
+      adjusted.adjustedXp,
       `practice:${agentId}`
     );
 
@@ -125,8 +148,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       feedback,
-      xp: xpAmount,
+      xp: adjusted.adjustedXp,
+      rawXp: adjusted.rawXp,
+      hintPenaltyXp: adjusted.breakdown.xpPenalty,
       leveledUp,
+      newLevel,
       achievements,
     });
   } catch (error) {
