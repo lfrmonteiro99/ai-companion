@@ -280,8 +280,10 @@ export async function getDashboardViewModel(userId: string): Promise<DashboardVi
     recentSessions.filter((item) => item.adjustedScore !== null)[1] ?? null;
 
   const insights: string[] = [];
-  if (latestScored?.adjustedScore !== null && previousScored?.adjustedScore !== null) {
-    const delta = latestScored.adjustedScore - previousScored.adjustedScore;
+  const latestAdjusted = latestScored?.adjustedScore;
+  const previousAdjusted = previousScored?.adjustedScore;
+  if (typeof latestAdjusted === "number" && typeof previousAdjusted === "number") {
+    const delta = latestAdjusted - previousAdjusted;
     if (delta >= 3) {
       insights.push(`Adjusted score improved by ${delta.toFixed(1)} in your latest session.`);
     } else if (delta <= -3) {
