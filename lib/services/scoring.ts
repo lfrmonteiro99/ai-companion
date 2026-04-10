@@ -27,12 +27,14 @@ const MODE_MULTIPLIER: Record<ConversationMode, number> = {
   practice: 1.0,
   scenario: 1.1,
   challenge: 1.25,
+  micro: 0.95,
 };
 
 const MIN_XP_FLOOR: Record<ConversationMode, number> = {
   practice: 3,
   scenario: 5,
   challenge: 8,
+  micro: 2,
 };
 
 const BASE_PENALTY_PER_HINT = 2;
