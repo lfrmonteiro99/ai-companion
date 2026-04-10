@@ -64,7 +64,8 @@ export default function HistoryPage() {
           throw new Error("Falha ao carregar histórico");
         }
         const data = await res.json();
-        setSessions(data.sessions || []);
+        const normalizedSessions = Array.isArray(data) ? data : data.sessions || [];
+        setSessions(normalizedSessions);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Erro ao carregar histórico"

@@ -48,8 +48,11 @@ export async function GET(
     });
 
     if (existingAttempt?.feedback) {
+      const cachedFeedback =
+        existingAttempt.feedback as unknown as SessionFeedback;
       return NextResponse.json({
-        feedback: existingAttempt.feedback as unknown as SessionFeedback,
+        ...cachedFeedback,
+        feedback: cachedFeedback,
         cached: true,
       });
     }
@@ -126,7 +129,11 @@ export async function GET(
       await saveFeedback(existingAttempt.id, feedback);
     }
 
-    return NextResponse.json({ feedback, cached: false });
+    return NextResponse.json({
+      ...feedback,
+      feedback,
+      cached: false,
+    });
   } catch (error) {
     console.error("[api/feedback] Error:", error);
     return NextResponse.json(
