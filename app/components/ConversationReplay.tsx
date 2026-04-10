@@ -14,13 +14,14 @@ interface ReplayMessage {
 interface MessageAnalysis {
   messageIndex: number;
   impact: "positive" | "neutral" | "negative";
-  issues?: string;
+  issues?: string[];
   suggestion?: string;
 }
 
 interface KeyMoment {
   messageIndex: number;
-  label: string;
+  type: string;
+  description: string;
 }
 
 interface SessionFeedback {
@@ -51,6 +52,15 @@ const IMPACT_BORDER: Record<string, string> = {
   positive: "border-emerald-500/40",
   neutral: "border-amber-500/40",
   negative: "border-rose-500/40",
+};
+
+const KEY_MOMENT_LABELS: Record<string, string> = {
+  momentum_loss: "Perda de Momentum",
+  too_intense: "Intenso Demais",
+  too_cold: "Frio Demais",
+  good_read: "Boa Leitura",
+  ignored_signal: "Sinal Ignorado",
+  good_recovery: "Boa Recuperacao",
 };
 
 function formatTime(ts: string): string {
@@ -157,7 +167,7 @@ export default function ConversationReplay({
               const currentUserIdx = isUser ? userMsgIndex : -1;
 
               const analysis = isUser ? analysisMap.get(currentUserIdx) : null;
-              const keyMoment = keyMomentMap.get(idx);
+              const keyMoment = isUser ? keyMomentMap.get(currentUserIdx) : null;
 
               return (
                 <div key={msg.id}>
@@ -170,7 +180,7 @@ export default function ConversationReplay({
                     >
                       <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent" />
                       <span className="shrink-0 rounded-full bg-indigo-500/15 px-3 py-1 text-[10px] font-medium tracking-wide text-indigo-400 ring-1 ring-indigo-500/25">
-                        {keyMoment.label}
+                        {KEY_MOMENT_LABELS[keyMoment.type] ?? keyMoment.description}
                       </span>
                       <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent" />
                     </motion.div>
@@ -260,7 +270,7 @@ export default function ConversationReplay({
                                 <span className="font-medium text-base-200">
                                   Problema:{" "}
                                 </span>
-                                {analysis.issues}
+                                {analysis.issues.join(", ")}
                               </p>
                             )}
                             {analysis.suggestion && (

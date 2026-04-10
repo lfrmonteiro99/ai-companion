@@ -17,13 +17,14 @@ interface ReplayMessage {
 interface MessageAnalysis {
   messageIndex: number;
   impact: "positive" | "neutral" | "negative";
-  issues?: string;
+  issues?: string[];
   suggestion?: string;
 }
 
 interface KeyMoment {
   messageIndex: number;
-  label: string;
+  type: string;
+  description: string;
 }
 
 interface SessionFeedback {
@@ -96,8 +97,9 @@ export default function ReplayPage() {
         // Feedback is optional — don't fail if it's missing
         if (feedbackRes && feedbackRes.ok) {
           const feedbackData = await feedbackRes.json();
-          if (feedbackData && feedbackData.messageAnalysis) {
-            setFeedback(feedbackData);
+          const normalizedFeedback = feedbackData?.feedback ?? feedbackData;
+          if (normalizedFeedback && normalizedFeedback.messageAnalysis) {
+            setFeedback(normalizedFeedback);
           }
         }
       } catch (err) {

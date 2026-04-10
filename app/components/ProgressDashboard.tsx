@@ -37,6 +37,10 @@ interface ProgressDashboardProps {
   skills: UserSkillScore | null;
 }
 
+const LEVEL_THRESHOLDS = [
+  0, 100, 250, 500, 800, 1200, 1700, 2300, 3000, 4000, 5500, 7500, 10000,
+];
+
 // ---------------------------------------------------------------------------
 // Skill label mapping (Portuguese)
 // ---------------------------------------------------------------------------
@@ -100,9 +104,12 @@ function getScoreColor(value: number): string {
 // ---------------------------------------------------------------------------
 
 export default function ProgressDashboard({ progress, skills }: ProgressDashboardProps) {
-  const xpPercent = progress.xpToNextLevel > 0
-    ? Math.min(100, Math.round((progress.xp / progress.xpToNextLevel) * 100))
-    : 100;
+  const currentLevelIdx = Math.max(0, progress.level - 1);
+  const currentLevelFloor = LEVEL_THRESHOLDS[currentLevelIdx] ?? 0;
+  const nextLevelTarget = LEVEL_THRESHOLDS[currentLevelIdx + 1] ?? progress.xpToNextLevel;
+  const xpInCurrentLevel = Math.max(0, progress.xp - currentLevelFloor);
+  const xpSpan = Math.max(1, nextLevelTarget - currentLevelFloor);
+  const xpPercent = Math.min(100, Math.round((xpInCurrentLevel / xpSpan) * 100));
 
   return (
     <div className="space-y-6">
@@ -136,7 +143,7 @@ export default function ProgressDashboard({ progress, skills }: ProgressDashboar
             {/* XP bar */}
             <div className="mt-2">
               <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-base-300">{progress.xp} / {progress.xpToNextLevel} XP</span>
+                <span className="text-base-300">{xpInCurrentLevel} / {xpSpan} XP</span>
                 <span className="text-base-400">{xpPercent}%</span>
               </div>
               <div className="h-2 rounded-full bg-base-600/60 overflow-hidden">
