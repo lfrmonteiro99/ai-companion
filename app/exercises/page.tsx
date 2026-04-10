@@ -4,6 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import ExerciseCard from "@/app/components/exercises/ExerciseCard";
 import ExerciseAnswerInput from "@/app/components/exercises/ExerciseAnswerInput";
 import ExerciseResultCard from "@/app/components/exercises/ExerciseResultCard";
+import PageHeader from "@/app/components/ui/PageHeader";
+import AppButton from "@/app/components/ui/AppButton";
+import { EmptyState, ErrorState, SkeletonState } from "@/app/components/ui/StateBlocks";
+import { PrimaryCard } from "@/app/components/ui/SurfaceCard";
 
 interface ExerciseOption {
   id: string;
@@ -102,18 +106,24 @@ export default function ExercisesPage() {
   return (
     <div className="relative min-h-[calc(100vh-73px)] overflow-hidden">
       <div className="relative mx-auto max-w-3xl px-6 py-10">
-        <div className="mb-5">
-          <h1 className="font-display text-3xl font-semibold text-base-50">Micro Exercises</h1>
-          <p className="text-base-300">One-question practice drills with instant feedback and XP.</p>
-        </div>
+        <PageHeader
+          title="Micro Exercises"
+          subtitle="One-question practice drills with instant feedback and XP."
+        />
 
-        {loading && <p className="text-base-300">Loading exercise...</p>}
-        {error && <p className="mb-3 text-sm text-rose-400">{error}</p>}
+        {loading && <SkeletonState />}
+        {error && <ErrorState message={error} />}
+        {!loading && !error && !exercise && (
+          <EmptyState
+            title="No exercise available"
+            description="Try again in a moment. New drills will appear here."
+          />
+        )}
 
         {exercise && !loading && (
           <div className="space-y-4">
             <ExerciseCard {...exercise} />
-            <section className="rounded-2xl border border-base-500/40 bg-base-800/85 p-5">
+            <PrimaryCard>
               <p className="mb-3 text-sm font-medium text-base-100">Your answer</p>
               <ExerciseAnswerInput
                 type={exercise.type}
@@ -122,21 +132,20 @@ export default function ExercisesPage() {
                 onChange={setAnswer}
               />
               <div className="mt-4 flex gap-2">
-                <button
+                <AppButton
                   onClick={handleSubmit}
                   disabled={submitting || !answer.trim()}
-                  className="rounded-lg bg-mira-500 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-mira-400 disabled:opacity-60"
                 >
                   {submitting ? "Submitting..." : "Submit answer"}
-                </button>
-                <button
+                </AppButton>
+                <AppButton
+                  variant="secondary"
                   onClick={loadNext}
-                  className="rounded-lg bg-base-700 px-3.5 py-2 text-sm font-medium text-base-100 transition hover:bg-base-600"
                 >
                   Skip
-                </button>
+                </AppButton>
               </div>
-            </section>
+            </PrimaryCard>
 
             {result && (
               <ExerciseResultCard
@@ -149,12 +158,12 @@ export default function ExercisesPage() {
               />
             )}
             {result && (
-              <button
+              <AppButton
                 onClick={loadNext}
-                className="rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
+                variant="primary"
               >
                 Next exercise
-              </button>
+              </AppButton>
             )}
           </div>
         )}
