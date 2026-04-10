@@ -27,6 +27,7 @@ model User {
   memories          Memory[]
   notifications     Notification[]
   scenarioAttempts  ScenarioAttempt[]
+  microAttempts     MicroExerciseAttempt[]
   skillScore        UserSkillScore?
   progress          UserProgress?
 }
@@ -231,4 +232,53 @@ model UserProgress {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   user               User      @relation(fields: [userId], references: [id])
+}
+
+model MicroExercise {
+  id          String                @id @default(uuid())
+  slug        String                @unique
+  type        String
+  title       String
+  prompt      String
+  difficulty  String                @default("normal")
+  targetSkill String
+  options     Json?
+  answerKey   Json
+  explanation String?
+  tags        String[]              @default([])
+  order       Int                   @default(0)
+  isActive    Boolean               @default(true)
+  createdAt   DateTime              @default(now())
+  attempts    MicroExerciseAttempt[]
+
+  @@index([isActive, order])
+  @@index([type, difficulty])
+  @@index([targetSkill, difficulty])
+}
+
+model MicroExerciseAttempt {
+  id                String        @id @default(uuid())
+  userId            String
+  exerciseId        String
+  status            String        @default("completed")
+  userAnswer        Json?
+  isCorrect         Boolean?
+  rawScore          Float?
+  adjustedScore     Float?
+  rawXp             Int           @default(0)
+  xpEarned          Int           @default(0)
+  hintsUsed         Int           @default(0)
+  directHintUses    Int           @default(0)
+  hintPenaltyScore  Float         @default(0)
+  hintPenaltyXp     Int           @default(0)
+  metadata          Json?
+  completedAt       DateTime?
+  createdAt         DateTime      @default(now())
+  user              User          @relation(fields: [userId], references: [id])
+  exercise          MicroExercise @relation(fields: [exerciseId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([userId, exerciseId])
+  @@index([exerciseId, createdAt])
+  @@index([status])
 }
