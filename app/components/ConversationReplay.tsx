@@ -129,9 +129,10 @@ export default function ConversationReplay({
         <div className="flex items-center gap-3">
           <a
             href="/history"
-            className="flex items-center gap-1.5 rounded-lg p-1.5 text-base-400 transition-colors hover:bg-base-700/60 hover:text-base-100"
+            className="flex items-center gap-1.5 rounded-lg p-1.5 text-base-400 transition-colors hover:bg-base-700/60 hover:text-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50"
+            aria-label="Voltar ao histórico"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={18} aria-hidden="true" />
           </a>
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-base-700 ring-1 ring-base-500/30 text-xs font-bold text-base-200">

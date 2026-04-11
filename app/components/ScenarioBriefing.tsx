@@ -181,7 +181,7 @@ export default function ScenarioBriefing({ scenario, agents, onStart, onBack }: 
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-base-400">
           Escolha uma agente
         </h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
           {agents.map((agent) => {
             const isSelected = selectedAgent === agent.id;
             const ringClass = isSelected

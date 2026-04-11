@@ -11,7 +11,7 @@ export default function AppButton({
   ...props
 }: AppButtonProps) {
   const base =
-    "rounded-xl px-3.5 py-2 text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed";
+    "rounded-xl px-3.5 py-2 text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-base-950";
   const style =
     variant === "primary"
       ? "bg-mira-500 text-white hover:bg-mira-400"

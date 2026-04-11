@@ -1,5 +1,7 @@
 "use client";
 
+import { BarChart3 } from "lucide-react";
+
 interface RecentSessionItem {
   conversationId: string;
   agentName: string;
@@ -18,42 +20,56 @@ interface RecentSessionsPanelProps {
   sessions: RecentSessionItem[];
 }
 
+const MODE_LABELS: Record<string, string> = {
+  practice: "Prática",
+  scenario: "Cenário",
+  challenge: "Desafio",
+};
+
 export default function RecentSessionsPanel({ sessions }: RecentSessionsPanelProps) {
   return (
     <section className="rounded-2xl border border-base-500/40 bg-base-800/85 p-5 backdrop-blur-md shadow-surface-1">
-      <p className="mb-3 text-xs uppercase tracking-wider text-base-400">Recent Sessions</p>
+      <p className="mb-3 text-xs uppercase tracking-wider text-base-400">Sessões Recentes</p>
       {sessions.length === 0 ? (
-        <p className="text-sm text-base-300">No sessions yet. Start one to populate your dashboard.</p>
+        <div className="py-4 text-center">
+          <p className="text-sm text-base-300">Ainda sem sessões.</p>
+          <a href="/agents" className="mt-2 inline-block text-sm text-mira-400 hover:text-mira-300 transition-colors">
+            Escolhe um agente para começar →
+          </a>
+        </div>
       ) : (
         <div className="space-y-2">
           {sessions.slice(0, 5).map((session) => (
             <div key={session.conversationId} className="rounded-xl border border-base-600/60 bg-base-700/40 p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-medium text-base-100">
-                  {session.agentName} • {session.mode}
+                  {session.agentName} • {MODE_LABELS[session.mode] || session.mode}
                 </p>
                 <p className="text-xs text-base-300">
-                  {new Date(session.updatedAt).toLocaleDateString("en-US")}
+                  {new Date(session.updatedAt).toLocaleDateString("pt-BR")}
                 </p>
               </div>
               {session.scenarioTitle && (
-                <p className="mt-1 text-xs text-base-300">Scenario: {session.scenarioTitle}</p>
+                <p className="mt-1 text-xs text-base-300">Cenário: {session.scenarioTitle}</p>
               )}
               <p className="mt-1 text-xs text-base-300">
-                Adjusted score: {session.adjustedScore === null ? "--" : Math.round(session.adjustedScore)}
+                Pontuação: {session.adjustedScore === null ? "--" : Math.round(session.adjustedScore)}
                 {" • "}
-                Raw score: {session.rawScore === null ? "--" : Math.round(session.rawScore)}
+                Bruto: {session.rawScore === null ? "--" : Math.round(session.rawScore)}
               </p>
-              <p className="mt-1 text-xs text-base-400">
-                Hints: {session.hintsUsed} (direct: {session.directHintUses}) • Penalty: -
-                {session.hintPenaltyScore.toFixed(1)} score / -{session.hintPenaltyXp} XP
-              </p>
-              <div className="mt-2 flex gap-2 text-xs">
-                <a href={`/replay/${session.conversationId}`} className="text-mira-300 hover:text-mira-200">
+              {session.hintsUsed > 0 && (
+                <p className="mt-1 text-xs text-base-400">
+                  Dicas: {session.hintsUsed} (diretas: {session.directHintUses}) • Penalidade: -
+                  {session.hintPenaltyScore.toFixed(1)} pontos / -{session.hintPenaltyXp} XP
+                </p>
+              )}
+              <div className="mt-2 flex gap-3 text-xs">
+                <a href={`/replay/${session.conversationId}`} className="text-mira-300 hover:text-mira-200 transition-colors">
                   Replay
                 </a>
-                <a href={`/analysis/${session.conversationId}`} className="text-mira-300 hover:text-mira-200">
-                  Analysis
+                <a href={`/analysis/${session.conversationId}`} className="flex items-center gap-1 text-indigo-300 hover:text-indigo-200 transition-colors">
+                  <BarChart3 size={11} aria-hidden="true" />
+                  Análise
                 </a>
               </div>
             </div>

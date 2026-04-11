@@ -85,6 +85,7 @@ export default function ChatWindow({
   const [hintData, setHintData] = useState<HintPayload | null>(null);
   const [hintError, setHintError] = useState<string | null>(null);
   const [hintCooldownUntil, setHintCooldownUntil] = useState<number>(0);
+  const [hintCooldownLeft, setHintCooldownLeft] = useState<number>(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -92,6 +93,17 @@ export default function ChatWindow({
   const userMessageCount = messages.filter((m) => m.senderRole === "user").length;
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, streamingContent, showTyping]);
+
+  // Hint cooldown countdown timer
+  useEffect(() => {
+    if (hintCooldownUntil <= Date.now()) { setHintCooldownLeft(0); return; }
+    const interval = setInterval(() => {
+      const left = Math.max(0, Math.ceil((hintCooldownUntil - Date.now()) / 1000));
+      setHintCooldownLeft(left);
+      if (left <= 0) clearInterval(interval);
+    }, 250);
+    return () => clearInterval(interval);
+  }, [hintCooldownUntil]);
 
   // Smart opener
   useEffect(() => {
@@ -246,7 +258,7 @@ export default function ChatWindow({
               <div>
                 <span className="font-display text-sm font-semibold text-base-50">{agentName}</span>
                 {showTyping && (
-                  <span className="ml-2 text-[10px] text-[var(--agent-accent)] animate-pulse">typing...</span>
+                  <span className="ml-2 text-[10px] text-[var(--agent-accent)] animate-pulse" aria-live="polite">a escrever...</span>
                 )}
               </div>
             </a>
@@ -254,17 +266,17 @@ export default function ChatWindow({
           <div className="flex items-center gap-1">
             <button
               onClick={() => setShowResetConfirm(true)}
-              className="rounded-lg p-1.5 text-base-400 transition-colors hover:bg-base-700/60 hover:text-rose-400"
-              title="Reset conversation"
+              className="rounded-lg p-1.5 text-base-400 transition-colors hover:bg-base-700/60 hover:text-rose-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50"
+              aria-label="Reiniciar conversa"
             >
-              <RotateCcw size={15} />
+              <RotateCcw size={15} aria-hidden="true" />
             </button>
             <button
               onClick={() => setSettingsOpen(true)}
-              className="rounded-lg p-1.5 text-base-400 transition-colors hover:bg-base-700/60 hover:text-base-100"
-              title="Settings"
+              className="rounded-lg p-1.5 text-base-400 transition-colors hover:bg-base-700/60 hover:text-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50"
+              aria-label="Definições do chat"
             >
-              <SettingsIcon size={15} />
+              <SettingsIcon size={15} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -278,40 +290,47 @@ export default function ChatWindow({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
               className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+              onClick={() => !resetting && setShowResetConfirm(false)}
+              aria-hidden="true"
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.94, y: 16 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.96, y: 8 }}
                 transition={{ duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Confirmar reiniciar conversa"
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => { if (e.key === "Escape" && !resetting) setShowResetConfirm(false); }}
                 className="surface-3 mx-4 w-full max-w-sm rounded-2xl p-6"
               >
-                <h3 className="mb-2 text-lg font-semibold text-base-50">Reset conversation?</h3>
+                <h3 className="mb-2 text-lg font-semibold text-base-50">Reiniciar conversa?</h3>
                 <p className="mb-5 text-sm text-base-300">
-                  This will erase all messages, memories, milestones, and relationship progress with {agentName}. This cannot be undone.
+                  Isto apaga todas as mensagens, memórias, milestones e progresso de relação com {agentName}. Esta ação não pode ser revertida.
                 </p>
                 <div className="flex justify-end gap-2">
                   <button
                     onClick={() => setShowResetConfirm(false)}
                     disabled={resetting}
-                    className="rounded-xl px-4 py-2 text-sm font-medium text-base-200 transition-colors hover:bg-base-600/50 disabled:opacity-50"
+                    className="rounded-xl px-4 py-2 text-sm font-medium text-base-200 transition-colors hover:bg-base-600/50 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50"
                   >
-                    Cancel
+                    Cancelar
                   </button>
                   <button
                     onClick={handleReset}
                     disabled={resetting}
-                    className="flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-rose-500 disabled:opacity-70 shadow-[0_0_16px_rgba(225,29,72,0.25)]"
+                    className="flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-rose-500 disabled:opacity-50 shadow-[0_0_16px_rgba(225,29,72,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/50"
                   >
                     {resetting ? (
                       <>
-                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
-                        Resetting...
+                        A reiniciar...
                       </>
-                    ) : "Reset"}
+                    ) : "Reiniciar"}
                   </button>
                 </div>
               </motion.div>
@@ -322,7 +341,7 @@ export default function ChatWindow({
         {/* Milestone notifications */}
         <AnimatePresence>
           {milestones.length > 0 && showMilestones && (
-            <div className="space-y-1 px-4 py-2">
+            <div className="space-y-1 px-4 py-2" aria-live="polite" role="status">
               {milestones.map((m, i) => (
                 <motion.div
                   key={`${m.type}-${i}`}
@@ -333,8 +352,8 @@ export default function ChatWindow({
                   className="flex items-center justify-between rounded-xl px-4 py-2.5 text-sm bg-[var(--agent-subtle)] text-base-100 border border-[var(--agent-accent)]/20"
                 >
                   <span className="font-medium">{m.label}</span>
-                  <button onClick={() => setMilestones((p) => p.filter((_, j) => j !== i))} className="ml-2 text-base-400 hover:text-base-100 transition-colors">
-                    <X size={14} />
+                  <button onClick={() => setMilestones((p) => p.filter((_, j) => j !== i))} className="ml-2 text-base-400 hover:text-base-100 transition-colors" aria-label="Fechar milestone">
+                    <X size={14} aria-hidden="true" />
                   </button>
                 </motion.div>
               ))}
@@ -351,8 +370,8 @@ export default function ChatWindow({
             </div>
             <div className="flex items-center gap-3 ml-3 shrink-0">
               {scenarioData.maxMessages && (
-                <span className="rounded-full bg-base-800/70 px-2 py-0.5 text-[11px] text-base-300">
-                  {userMessageCount}/{scenarioData.maxMessages} msgs
+                <span className="rounded-full bg-base-800/70 px-2 py-0.5 text-[11px] text-base-300" aria-label={`${userMessageCount} de ${scenarioData.maxMessages} mensagens usadas`}>
+                  {userMessageCount} de {scenarioData.maxMessages} msgs
                 </span>
               )}
               <button
@@ -422,7 +441,7 @@ export default function ChatWindow({
                   )}
                   <div className="text-center space-y-1.5 max-w-xs">
                     <p className="font-display text-xl font-semibold italic text-base-50">{agentName}</p>
-                    <p className="text-sm text-base-300">{isScenario ? "Começa a conversa e tenta atingir o objetivo." : "Start a conversation and see where it goes..."}</p>
+                    <p className="text-sm text-base-300">{isScenario ? "Começa a conversa e tenta atingir o objetivo." : "Começa uma conversa e vê onde leva..."}</p>
                   </div>
                 </motion.div>
               )}
@@ -509,13 +528,13 @@ export default function ChatWindow({
           <div className="mx-auto flex max-w-2xl gap-2">
             <button
               onClick={handleHint}
-              disabled={hintLoading || sending || Date.now() < hintCooldownUntil}
-              className="rounded-xl border border-[var(--agent-accent)]/40 bg-[var(--agent-accent)]/10 px-3 py-2.5 text-xs font-semibold text-[var(--agent-accent)] transition-all duration-200 hover:bg-[var(--agent-accent)]/20 disabled:opacity-40"
-              title="Pedir uma dica contextual"
+              disabled={hintLoading || sending || hintCooldownLeft > 0}
+              className="rounded-xl border border-[var(--agent-accent)]/40 bg-[var(--agent-accent)]/10 px-3 py-2.5 text-xs font-semibold text-[var(--agent-accent)] transition-all duration-200 hover:bg-[var(--agent-accent)]/20 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--agent-accent)]/50"
+              aria-label={hintCooldownLeft > 0 ? `Dica disponível em ${hintCooldownLeft}s` : "Pedir uma dica contextual"}
             >
               <span className="flex items-center gap-1.5">
-                <Lightbulb size={14} />
-                {hintLoading ? "A gerar..." : "Dica"}
+                <Lightbulb size={14} aria-hidden="true" />
+                {hintLoading ? "A gerar..." : hintCooldownLeft > 0 ? `${hintCooldownLeft}s` : "Dica"}
               </span>
             </button>
             <textarea
@@ -530,13 +549,14 @@ export default function ChatWindow({
             <button
               onClick={handleSend}
               disabled={sending || !input.trim()}
-              className="rounded-xl bg-[var(--agent-accent)] px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_16px_var(--agent-glow)] disabled:opacity-40 disabled:shadow-none"
+              className="rounded-xl bg-[var(--agent-accent)] px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:brightness-110 hover:shadow-[0_0_16px_var(--agent-glow)] disabled:opacity-50 disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--agent-accent)]/50"
+              aria-label="Enviar mensagem"
             >
-              <Send size={18} />
+              <Send size={18} aria-hidden="true" />
             </button>
           </div>
           {(hintData || hintError) && (
-            <div className="mx-auto mt-2 max-w-2xl rounded-xl border border-[var(--agent-accent)]/25 bg-[var(--agent-subtle)] p-3 text-xs text-base-200 shadow-surface-1">
+            <div className="mx-auto mt-2 max-w-2xl rounded-xl border border-[var(--agent-accent)]/25 bg-[var(--agent-subtle)] p-3 text-xs text-base-200 shadow-surface-1" aria-live="polite" role="status">
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-[11px] font-semibold text-[var(--agent-accent)]">
                   Dica Contextual
@@ -547,7 +567,7 @@ export default function ChatWindow({
                     setHintError(null);
                   }}
                   className="rounded-md p-1 text-base-400 transition-colors hover:bg-base-700/50 hover:text-base-100"
-                  title="Fechar dica"
+                  aria-label="Fechar dica"
                 >
                   <X size={12} />
                 </button>

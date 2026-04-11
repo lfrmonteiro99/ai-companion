@@ -123,6 +123,36 @@ export const ACHIEVEMENTS: Achievement[] = [
     icon: "Feather",
   },
 
+  // --- Streak Milestones ---
+  {
+    id: "streak_3",
+    label: "Momentum",
+    description: "Mantém uma streak de 3 dias consecutivos",
+    condition: "streakDays >= 3",
+    icon: "Flame",
+  },
+  {
+    id: "streak_7",
+    label: "Dedicado",
+    description: "Mantém uma streak de 7 dias consecutivos",
+    condition: "streakDays >= 7",
+    icon: "Flame",
+  },
+  {
+    id: "streak_14",
+    label: "Consistente",
+    description: "Mantém uma streak de 14 dias consecutivos",
+    condition: "streakDays >= 14",
+    icon: "Flame",
+  },
+  {
+    id: "streak_30",
+    label: "Imparável",
+    description: "Mantém uma streak de 30 dias consecutivos",
+    condition: "streakDays >= 30",
+    icon: "Flame",
+  },
+
   // --- Level Milestones ---
   {
     id: "level_5",

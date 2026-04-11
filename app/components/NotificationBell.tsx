@@ -70,9 +70,11 @@ export default function NotificationBell({ userId }: { userId: string | null }) 
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative rounded-lg p-2 text-base-400 transition-colors hover:bg-base-700/60 hover:text-base-100"
+        className="relative rounded-lg p-2 text-base-400 transition-colors hover:bg-base-700/60 hover:text-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50"
+        aria-label={unreadCount > 0 ? `Notificações (${unreadCount} por ler)` : "Notificações"}
+        aria-expanded={open}
       >
-        <Bell size={18} />
+        <Bell size={18} aria-hidden="true" />
         {unreadCount > 0 && (
           <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white shadow-lg shadow-rose-500/30">
             {unreadCount > 9 ? "9+" : unreadCount}

@@ -23,20 +23,20 @@ export default async function Home() {
         <div className="absolute bottom-0 left-1/2 h-[300px] w-[800px] -translate-x-1/2 rounded-full bg-valeria-500/[0.04] blur-[120px]" />
       </div>
 
-      <div className="relative mx-auto max-w-5xl px-6 py-10">
+      <div className="relative mx-auto max-w-5xl px-4 py-10 sm:px-6">
         {!dashboard ? (
           <div className="rounded-2xl border border-base-500/40 bg-base-800/85 p-8 text-center backdrop-blur-md">
             <h1 className="mb-2 font-display text-3xl font-semibold text-base-50">
-              Train social conversations with purpose
+              Treina conversas sociais com propósito
             </h1>
             <p className="mx-auto max-w-xl text-base-300">
-              Sign in to unlock your action-first dashboard with progress insights, focused plans, and quick replay loops.
+              Pratica comunicação, confiança e leitura social com 5 personalidades únicas num simulador gamificado com feedback detalhado.
             </p>
             <a
               href="/login"
               className="mt-5 inline-flex rounded-lg bg-mira-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-mira-400"
             >
-              Sign in
+              Entrar
             </a>
           </div>
         ) : (
