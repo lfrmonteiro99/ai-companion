@@ -165,7 +165,7 @@ export async function submitMicroExercise(params: {
       userId: params.userId,
       exerciseId: exercise.id,
       status: "completed",
-      userAnswer: params.answer,
+      userAnswer: JSON.parse(JSON.stringify(params.answer)),
       isCorrect: evaluation.isCorrect,
       rawScore: final.rawScore,
       adjustedScore: final.adjustedScore,
