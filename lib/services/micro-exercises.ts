@@ -62,24 +62,26 @@ async function ensureSeededExercises() {
   const count = await prisma.microExercise.count();
   if (count > 0) return;
 
-  await prisma.microExercise.createMany({
-    data: MICRO_EXERCISE_SEEDS.map((exercise) => ({
-      slug: exercise.slug,
-      type: exercise.type,
-      title: exercise.title,
-      prompt: exercise.prompt,
-      difficulty: exercise.difficulty,
-      targetSkill: exercise.targetSkill,
-      // Cast needed: Prisma Json? expects InputJsonValue, not the typed array
-      options: (exercise.options as unknown) ?? undefined,
-      answerKey: exercise.answerKey as Record<string, unknown>,
-      explanation: exercise.explanation,
-      tags: exercise.tags,
-      order: exercise.order,
-      isActive: true,
-    })),
-    skipDuplicates: true,
-  });
+  for (const exercise of MICRO_EXERCISE_SEEDS) {
+    await prisma.microExercise.upsert({
+      where: { slug: exercise.slug },
+      update: {},
+      create: {
+        slug: exercise.slug,
+        type: exercise.type,
+        title: exercise.title,
+        prompt: exercise.prompt,
+        difficulty: exercise.difficulty,
+        targetSkill: exercise.targetSkill,
+        options: exercise.options ? JSON.parse(JSON.stringify(exercise.options)) : undefined,
+        answerKey: JSON.parse(JSON.stringify(exercise.answerKey)),
+        explanation: exercise.explanation,
+        tags: exercise.tags,
+        order: exercise.order,
+        isActive: true,
+      },
+    });
+  }
 }
 
 export async function getNextMicroExercise(userId: string): Promise<MicroExerciseRecord | null> {
