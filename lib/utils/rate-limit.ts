@@ -34,11 +34,11 @@ export function createRateLimiter(name: string, config: RateLimitConfig) {
   const timer = setInterval(() => {
     const now = Date.now();
     const staleThreshold = config.refillIntervalMs * 10;
-    for (const [key, entry] of store) {
+    store.forEach((entry, key) => {
       if (now - entry.lastRefill > staleThreshold) {
         store.delete(key);
       }
-    }
+    });
   }, 5 * 60 * 1000);
   // Allow Node.js process to exit even with this timer running
   if (typeof timer === "object" && "unref" in timer) {
