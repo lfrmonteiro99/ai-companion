@@ -70,8 +70,9 @@ async function ensureSeededExercises() {
       prompt: exercise.prompt,
       difficulty: exercise.difficulty,
       targetSkill: exercise.targetSkill,
-      options: exercise.options ?? undefined,
-      answerKey: exercise.answerKey,
+      // Cast needed: Prisma Json? expects InputJsonValue, not the typed array
+      options: (exercise.options as unknown) ?? undefined,
+      answerKey: exercise.answerKey as Record<string, unknown>,
       explanation: exercise.explanation,
       tags: exercise.tags,
       order: exercise.order,
