@@ -45,6 +45,9 @@ function readStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 }
 
+/** Max hint suggestions to retain per conversation session */
+const MAX_HINT_HISTORY = 40;
+
 export async function appendHintSuggestions(conversationId: string, suggestions: string[]): Promise<void> {
   if (!suggestions.length) return;
   const conversation = await prisma.conversation.findUnique({
@@ -53,7 +56,17 @@ export async function appendHintSuggestions(conversationId: string, suggestions:
   });
   const meta = toSessionMeta(conversation?.sessionMeta);
   const existing = readStringArray(meta.hintSuggestionHistory);
-  const next = [...existing, ...suggestions].slice(-40);
+
+  // Deduplicate: only add suggestions not already present (normalized comparison)
+  const existingNormalized = new Set(existing.map(normalize));
+  const newUnique = suggestions.filter((s) => !existingNormalized.has(normalize(s)));
+
+  // Evict oldest entries first when exceeding limit
+  const combined = [...existing, ...newUnique];
+  const next = combined.length > MAX_HINT_HISTORY
+    ? combined.slice(combined.length - MAX_HINT_HISTORY)
+    : combined;
+
   await prisma.conversation.update({
     where: { id: conversationId },
     data: {

@@ -1,6 +1,9 @@
 import OpenAI from "openai";
 import { config } from "@/lib/config";
+import { withRetry, isTransientError } from "@/lib/utils/retry";
+import { logger } from "@/lib/utils/logger";
 
+const log = logger("llm");
 const openai = new OpenAI({ apiKey: config.openaiApiKey });
 
 export interface ChatMessage {
@@ -39,33 +42,47 @@ export async function generateChatResponse(params: {
   const model = selectModel(stage);
   const maxTokens = params.maxTokens || selectMaxTokens(stage);
 
-  const response = await openai.chat.completions.create({
-    model,
-    messages: [
-      { role: "system", content: systemPrompt },
-      ...messages,
-    ],
-    temperature,
-    max_tokens: maxTokens,
-    frequency_penalty: 0.7,
-    presence_penalty: 0.5,
-  });
+  return withRetry(
+    async () => {
+      const response = await openai.chat.completions.create({
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...messages,
+        ],
+        temperature,
+        max_tokens: maxTokens,
+        frequency_penalty: 0.7,
+        presence_penalty: 0.5,
+      });
 
-  return response.choices[0]?.message?.content || "";
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        log.warn("Empty response from OpenAI", { model, stage });
+      }
+      return content || "";
+    },
+    { maxAttempts: 3, baseDelayMs: 1000, shouldRetry: isTransientError },
+  );
 }
 
 export async function generateStructuredOutput(prompt: string): Promise<Record<string, number>> {
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: "You are a JSON-only analysis engine. Return ONLY valid JSON, no markdown, no explanation." },
-      { role: "user", content: prompt },
-    ],
-    temperature: 0.3,
-    max_tokens: 200,
-    response_format: { type: "json_object" },
-  });
+  return withRetry(
+    async () => {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: "You are a JSON-only analysis engine. Return ONLY valid JSON, no markdown, no explanation." },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 200,
+        response_format: { type: "json_object" },
+      });
 
-  const content = response.choices[0]?.message?.content || "{}";
-  return JSON.parse(content);
+      const content = response.choices[0]?.message?.content || "{}";
+      return JSON.parse(content);
+    },
+    { maxAttempts: 3, baseDelayMs: 1000, shouldRetry: isTransientError },
+  );
 }

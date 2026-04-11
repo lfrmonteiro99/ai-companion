@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { SkillScores, AgentConfig, SuccessCriteria } from "@/lib/types";
 import { generateStructuredOutput } from "./llm";
 import { UserSkillScore } from "@prisma/client";
+import { logger } from "@/lib/utils/logger";
+
+const log = logger("evaluation");
 
 const SKILL_KEYS: (keyof SkillScores)[] = [
   "confidence",
@@ -127,7 +130,7 @@ export async function evaluateSession(
     const raw = await generateStructuredOutput(prompt);
     return parseAndValidateScores(raw);
   } catch (error) {
-    console.error("[evaluation] LLM evaluation failed, using fallback scores:", error);
+    log.warn("LLM evaluation failed, using fallback scores", { messageCount: messages.length, agentId: agent.id });
     return { ...DEFAULT_SCORES };
   }
 }

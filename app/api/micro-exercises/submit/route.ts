@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/supabase/server";
 import { getOrCreateUser } from "@/lib/services/auth";
 import { submitMicroExercise } from "@/lib/services/micro-exercises";
+import { microExerciseLimiter } from "@/lib/utils/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const user = await getOrCreateUser(authUser);
+
+    // Rate limiting
+    const rateCheck = microExerciseLimiter.check(user.id);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests", retryAfterMs: rateCheck.retryAfterMs },
+        { status: 429 },
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
 
     const exerciseId =

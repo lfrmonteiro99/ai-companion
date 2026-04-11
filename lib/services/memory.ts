@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { AgentConfig } from "@/lib/types";
 import { generateStructuredOutput } from "./llm";
+import { logger } from "@/lib/utils/logger";
+
+const log = logger("memory");
 
 interface MemoryCandidate {
   content: string;
@@ -56,14 +59,8 @@ Return ONLY valid JSON.`;
       if (!mem.content || !VALID_TYPES.includes(mem.type)) continue;
       if ((mem.salience || 0) < 0.5 || (mem.confidence || 0) < 0.6) continue;
 
-      // Check for duplicate content
-      const existing = await prisma.memory.findFirst({
-        where: {
-          userId,
-          agentId,
-          content: { contains: mem.content.substring(0, 30) },
-        },
-      });
+      // Check for duplicate content using normalized token overlap
+      const existing = await findDuplicateMemory(userId, agentId, mem.content);
 
       if (!existing) {
         await prisma.memory.create({
@@ -83,9 +80,61 @@ Return ONLY valid JSON.`;
 
     return stored;
   } catch (err) {
-    console.error("Memory extraction error:", err);
+    log.error("Memory extraction failed", err, { userId, agentId });
     return 0;
   }
+}
+
+/**
+ * Improved duplicate detection: normalize text and check token overlap >= 70%.
+ * Falls back to substring check for very short memories.
+ */
+async function findDuplicateMemory(
+  userId: string,
+  agentId: string,
+  content: string,
+): Promise<{ id: string } | null> {
+  const candidates = await prisma.memory.findMany({
+    where: { userId, agentId },
+    select: { id: true, content: true },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+
+  const normalizedNew = normalizeForComparison(content);
+  const newTokens = normalizedNew.split(" ").filter(Boolean);
+
+  for (const candidate of candidates) {
+    const normalizedExisting = normalizeForComparison(candidate.content);
+
+    // Exact match after normalization
+    if (normalizedNew === normalizedExisting) return candidate;
+
+    // Token overlap check
+    const existingTokens = normalizedExisting.split(" ").filter(Boolean);
+    if (newTokens.length === 0 || existingTokens.length === 0) continue;
+
+    const existingSet = new Set(existingTokens);
+    let overlap = 0;
+    for (const token of newTokens) {
+      if (existingSet.has(token)) overlap++;
+    }
+
+    const similarity = overlap / Math.max(newTokens.length, existingTokens.length);
+    if (similarity >= 0.7) return candidate;
+  }
+
+  return null;
+}
+
+function normalizeForComparison(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**

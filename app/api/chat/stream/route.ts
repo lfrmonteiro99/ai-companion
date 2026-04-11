@@ -8,10 +8,14 @@ import { retrieveMemories, extractMemories } from "@/lib/services/memory";
 import { updateMood } from "@/lib/services/mood";
 import { checkMilestones } from "@/lib/services/milestone";
 import { trackDirectHintUse } from "@/lib/services/hint-usage";
+import { sanitizeUserMessage } from "@/lib/utils/sanitize";
+import { chatStreamLimiter } from "@/lib/utils/rate-limit";
+import { logger } from "@/lib/utils/logger";
 import { config } from "@/lib/config";
 import { z } from "zod";
 import OpenAI from "openai";
 
+const log = logger("api/chat/stream");
 const openai = new OpenAI({ apiKey: config.openaiApiKey });
 
 const sendMessageSchema = z.object({
@@ -47,7 +51,18 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ error: "Invalid request" }), { status: 400 });
   }
 
-  const { userId, agentId, message, mode = "practice", scenarioId } = body;
+  const { userId, agentId, mode = "practice", scenarioId } = body;
+  const message = sanitizeUserMessage(body.message);
+
+  // Rate limiting
+  const rateCheck = chatStreamLimiter.check(userId);
+  if (!rateCheck.allowed) {
+    return new Response(
+      JSON.stringify({ error: "Too many requests", retryAfterMs: rateCheck.retryAfterMs }),
+      { status: 429, headers: { "Retry-After": String(Math.ceil((rateCheck.retryAfterMs || 10000) / 1000)) } },
+    );
+  }
+
   const agent = getAgent(agentId);
   if (!agent) {
     return new Response(JSON.stringify({ error: "Agent not found" }), { status: 404 });
@@ -159,21 +174,24 @@ export async function POST(req: NextRequest) {
         // Background: state + memory + milestones (batched)
         const messageCount = recentMessages.length;
         const allMessages = [...recentMessages.map((m) => ({ senderRole: m.senderRole, content: m.content })), { senderRole: "assistant", content: fullReply }];
+        const bgContext = { userId, agentId, conversationId: conversation.id, messageCount };
 
         const backgroundTasks: Promise<unknown>[] = [
-          // State deltas every 4 messages (was every message)
+          // State deltas every 4 messages
           messageCount % 4 === 0
             ? computeStateDelta(message, fullReply, agent, state)
                 .then((delta) => applyDelta(userId, agentId, delta))
                 .then(() => checkStageProgression(userId, agentId, agent))
+                .catch((err) => { log.error("Background state delta failed", err, bgContext); })
             : Promise.resolve(),
-          // Memory extraction every 10 messages (was every 6)
+          // Memory extraction every 10 messages
           messageCount % 10 === 0
             ? extractMemories(userId, agentId, allMessages, agent)
+                .catch((err) => { log.error("Background memory extraction failed", err, bgContext); return 0; })
             : Promise.resolve(0),
           // Milestones check
           checkMilestones(userId, agentId, previousStage)
-            .catch(() => [] as { type: string; label: string }[]),
+            .catch((err) => { log.error("Background milestone check failed", err, bgContext); return [] as { type: string; label: string }[]; }),
         ];
 
         const results = await Promise.all(backgroundTasks);

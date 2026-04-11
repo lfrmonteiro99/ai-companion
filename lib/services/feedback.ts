@@ -2,6 +2,8 @@ import OpenAI from "openai";
 import { config } from "@/lib/config";
 import { prisma } from "@/lib/prisma";
 import { generateStructuredOutput } from "./llm";
+import { withRetry, isTransientError } from "@/lib/utils/retry";
+import { logger } from "@/lib/utils/logger";
 import type {
   SessionFeedback,
   MessageFeedback,
@@ -11,6 +13,7 @@ import type {
   SuccessCriteria,
 } from "@/lib/types";
 
+const log = logger("feedback");
 const openai = new OpenAI({ apiKey: config.openaiApiKey });
 
 // ---------------------------------------------------------------------------
@@ -20,23 +23,28 @@ const openai = new OpenAI({ apiKey: config.openaiApiKey });
 // dedicated call here while keeping the same model and json_object mode.
 // ---------------------------------------------------------------------------
 async function generateDetailedFeedback(prompt: string): Promise<SessionFeedback> {
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a JSON-only conversation coach engine. Return ONLY valid JSON, no markdown, no explanation. All text fields that represent feedback visible to the user must be written in Brazilian Portuguese.",
-      },
-      { role: "user", content: prompt },
-    ],
-    temperature: 0.4,
-    max_tokens: 4000,
-    response_format: { type: "json_object" },
-  });
+  return withRetry(
+    async () => {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a JSON-only conversation coach engine. Return ONLY valid JSON, no markdown, no explanation. All text fields that represent feedback visible to the user must be written in Brazilian Portuguese.",
+          },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.4,
+        max_tokens: 4000,
+        response_format: { type: "json_object" },
+      });
 
-  const content = response.choices[0]?.message?.content || "{}";
-  return JSON.parse(content) as SessionFeedback;
+      const content = response.choices[0]?.message?.content || "{}";
+      return JSON.parse(content) as SessionFeedback;
+    },
+    { maxAttempts: 2, baseDelayMs: 1500, shouldRetry: isTransientError },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -235,7 +243,7 @@ Retorne SOMENTE um JSON válido com a estrutura:
 
     return feedback;
   } catch (error) {
-    console.error("[feedback] Failed to generate session feedback:", error);
+    log.error("Failed to generate session feedback", error, { agentId: agent.id });
 
     // Return a minimal fallback so the caller always gets a valid structure
     const fallback: SessionFeedback = {
@@ -293,7 +301,7 @@ export async function saveFeedback(
       },
     });
   } catch (error) {
-    console.error("[feedback] Failed to save feedback for attempt", attemptId, error);
+    log.error("Failed to save feedback", error, { attemptId });
     throw error;
   }
 }

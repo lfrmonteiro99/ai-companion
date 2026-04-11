@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { generateContextualHint } from "@/lib/services/hint";
+import { chatHintLimiter } from "@/lib/utils/rate-limit";
 import type { ConversationMode } from "@/lib/types";
 
 const hintSchema = z.object({
@@ -16,6 +17,16 @@ const hintSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const body = hintSchema.parse(await req.json());
+
+    // Rate limiting
+    const rateCheck = chatHintLimiter.check(body.userId);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: "Too many hint requests", retryAfterMs: rateCheck.retryAfterMs },
+        { status: 429 },
+      );
+    }
+
     const result = await generateContextualHint({
       userId: body.userId,
       agentId: body.agentId,
