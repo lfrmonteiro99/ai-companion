@@ -110,12 +110,12 @@ export default function ExercisesPage() {
     <div className="relative min-h-[calc(100vh-73px)] overflow-hidden">
       <div className="relative mx-auto max-w-3xl px-6 py-10">
         <PageHeader
-          title="Micro Exercises"
-          subtitle="One-question practice drills with instant feedback and XP."
+          title="Micro Exercícios"
+          subtitle="Exercícios rápidos de uma pergunta com feedback instantâneo e XP."
         />
         <div className="mb-4 rounded-xl border border-base-500/40 bg-base-800/70 px-4 py-3">
           <div className="mb-1 flex items-center justify-between text-xs text-base-300">
-            <span>Daily quick pack</span>
+            <span>Pack diário</span>
             <span>
               {completedCount}/{DAILY_PACK_TARGET}
             </span>
@@ -130,10 +130,22 @@ export default function ExercisesPage() {
 
         {loading && <SkeletonState />}
         {error && <ErrorState message={error} />}
-        {!loading && !error && !exercise && (
+        {/* Daily pack complete celebration */}
+        {completedCount >= DAILY_PACK_TARGET && !loading && (
+          <div className="mb-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center backdrop-blur-md">
+            <p className="text-2xl" aria-hidden="true">🎉</p>
+            <p className="mt-2 font-display text-lg font-semibold text-emerald-300">Pack diário completo!</p>
+            <p className="mt-1 text-sm text-base-300">Completaste os {DAILY_PACK_TARGET} exercícios de hoje. Volta amanhã para mais.</p>
+            <a href="/" className="mt-4 inline-flex rounded-xl bg-base-700 px-4 py-2 text-sm font-medium text-base-100 transition hover:bg-base-600">
+              Voltar ao dashboard
+            </a>
+          </div>
+        )}
+
+        {!loading && !error && !exercise && completedCount < DAILY_PACK_TARGET && (
           <EmptyState
-            title="No exercise available"
-            description="Try again in a moment. New drills will appear here."
+            title="Nenhum exercício disponível"
+            description="Tenta de novo num momento. Novos exercícios aparecerão aqui."
           />
         )}
 

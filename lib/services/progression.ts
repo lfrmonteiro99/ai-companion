@@ -261,6 +261,13 @@ export async function updateStreak(userId: string): Promise<number> {
     },
   });
 
+  // Award bonus XP for streak milestones
+  const STREAK_BONUSES: Record<number, number> = { 3: 15, 7: 30, 14: 50, 30: 100 };
+  const bonus = STREAK_BONUSES[newStreak];
+  if (bonus) {
+    await awardXP(userId, bonus, `streak_milestone:${newStreak}`);
+  }
+
   return newStreak;
 }
 
