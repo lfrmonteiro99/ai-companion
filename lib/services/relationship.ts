@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { AgentConfig } from "@/lib/types";
 import { generateStructuredOutput } from "./llm";
+import { logger } from "@/lib/utils/logger";
+
+const log = logger("relationship");
 
 export interface StateDelta {
   interest: number;
@@ -60,7 +63,8 @@ Return ONLY valid JSON: {"interest":0,"trust":0,"comfort":0,"tension":0,"respect
       conversationDepth: clampDelta(result.conversationDepth),
       dynamicAlignment: clampDelta(result.dynamicAlignment),
     };
-  } catch {
+  } catch (error) {
+    log.warn("State delta LLM failed, using neutral fallback", { agentId: agent.id, stage: currentState.stage });
     // Fallback: small positive deltas for continued engagement
     return { interest: 1, trust: 1, comfort: 1, tension: 0, respect: 1, attachment: 0, emotionalOpenness: 0, conversationDepth: 1, dynamicAlignment: 0 };
   }

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createClient } from "@supabase/supabase-js";
+import { config } from "@/lib/config";
+import { logger } from "@/lib/utils/logger";
+
+const log = logger("api/user");
 
 export async function DELETE(req: NextRequest) {
   const { searchParams } = req.nextUrl;
@@ -43,12 +48,35 @@ export async function DELETE(req: NextRequest) {
     prisma.notification.deleteMany({ where: { userId } }),
   ]);
 
-  // 3. Delete user record
+  // 3. Delete scenario attempts and progress data
+  await Promise.all([
+    prisma.scenarioAttempt.deleteMany({ where: { userId } }),
+    prisma.microExerciseAttempt.deleteMany({ where: { userId } }),
+    prisma.userSkillScore.deleteMany({ where: { userId } }),
+    prisma.userProgress.deleteMany({ where: { userId } }),
+  ]);
+
+  // 4. Delete user record
   await prisma.user.delete({ where: { id: userId } });
 
-  // 4. Delete Supabase auth user
-  // Note: Supabase admin API is needed for this, which requires the service_role key.
-  // For now, we delete the DB record. The auth user will be orphaned but harmless.
+  // 5. Delete Supabase auth user (requires service_role key)
+  if (config.supabaseServiceRoleKey) {
+    try {
+      const supabaseAdmin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        config.supabaseServiceRoleKey,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+      );
+      const { error } = await supabaseAdmin.auth.admin.deleteUser(authUser.id);
+      if (error) {
+        log.error("Failed to delete Supabase auth user", error, { userId, authId: authUser.id });
+      }
+    } catch (err) {
+      log.error("Supabase admin deletion threw", err, { userId, authId: authUser.id });
+    }
+  } else {
+    log.warn("SUPABASE_SERVICE_ROLE_KEY not set — auth user not deleted", { userId, authId: authUser.id });
+  }
 
   return NextResponse.json({ success: true });
 }

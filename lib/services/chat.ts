@@ -8,6 +8,13 @@ import { retrieveMemories, extractMemories } from "./memory";
 import { updateMood } from "./mood";
 import { ConversationMode, AgentConstraints } from "@/lib/types";
 import { trackDirectHintUse } from "./hint-usage";
+import { sanitizeUserMessage } from "@/lib/utils/sanitize";
+import { logger } from "@/lib/utils/logger";
+
+const log = logger("chat");
+
+/** Number of recent messages to load for context */
+const MESSAGE_CONTEXT_SIZE = 15;
 
 export interface SendMessageParams {
   userId: string;
@@ -27,7 +34,8 @@ export interface SendMessageResult {
 }
 
 export async function sendMessage(params: SendMessageParams): Promise<SendMessageResult> {
-  const { userId, agentId, message, mode = "practice", scenarioId, attemptId } = params;
+  const { userId, agentId, mode = "practice", scenarioId, attemptId } = params;
+  const message = sanitizeUserMessage(params.message);
 
   const agent = getAgent(agentId);
   if (!agent) {
@@ -73,12 +81,12 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
     },
   });
 
-  // 4. Load context: last 15 messages (down from 30) + memories
+  // 4. Load context: recent messages + memories
   const [recentMessagesDesc, memories] = await Promise.all([
     prisma.message.findMany({
       where: { conversationId: conversation.id },
       orderBy: { createdAt: "desc" },
-      take: 15,
+      take: MESSAGE_CONTEXT_SIZE,
     }),
     retrieveMemories(userId, agentId, agent),
   ]);
@@ -129,16 +137,21 @@ export async function sendMessage(params: SendMessageParams): Promise<SendMessag
   const messageCount = recentMessages.length;
   const allMessages = [...recentMessages.map((m) => ({ senderRole: m.senderRole, content: m.content })), { senderRole: "assistant", content: reply }];
 
-  Promise.all([
-    // State deltas every 4 messages (was every message)
-    messageCount % 4 === 0
-      ? computeStateDelta(message, reply, agent, state)
-          .then((delta) => applyDelta(userId, agentId, delta))
-          .then(() => checkStageProgression(userId, agentId, agent))
-      : Promise.resolve(),
-    // Memory extraction every 10 messages (was every 6)
-    messageCount % 10 === 0 ? extractMemories(userId, agentId, allMessages, agent) : Promise.resolve(0),
-  ]).catch((err) => console.error("Background task error:", err));
+  const bgContext = { userId, agentId, conversationId: conversation.id, messageCount };
+
+  // State deltas every 4 messages
+  if (messageCount % 4 === 0) {
+    computeStateDelta(message, reply, agent, state)
+      .then((delta) => applyDelta(userId, agentId, delta))
+      .then(() => checkStageProgression(userId, agentId, agent))
+      .catch((err) => log.error("Background state delta failed", err, bgContext));
+  }
+
+  // Memory extraction every 10 messages
+  if (messageCount % 10 === 0) {
+    extractMemories(userId, agentId, allMessages, agent)
+      .catch((err) => log.error("Background memory extraction failed", err, bgContext));
+  }
 
   // 10. Return response with message count for scenario tracking
   return {

@@ -204,7 +204,6 @@ export interface SuccessCriteria {
   maxTension?: number;
   minTension?: number;
   noInsistenceAfterRejection?: boolean;
-  customCondition?: string;
 }
 
 // --- Progression ---

@@ -15,6 +15,7 @@ import {
 } from "@/lib/services/progression";
 import { getAgent } from "@/lib/agents";
 import { computeFinalScoreAndXp } from "@/lib/services/scoring";
+import { evaluateLimiter } from "@/lib/utils/rate-limit";
 
 const evaluateSchema = z.object({
   conversationId: z.string(),
@@ -30,6 +31,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const user = await getOrCreateUser(authUser);
+
+    // Rate limiting
+    const rateCheck = evaluateLimiter.check(user.id);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: "Too many evaluation requests", retryAfterMs: rateCheck.retryAfterMs },
+        { status: 429 },
+      );
+    }
 
     const body = await req.json();
     const { conversationId, agentId } = evaluateSchema.parse(body);
