@@ -88,7 +88,7 @@ export default function HistoryPage() {
         <div className="absolute right-1/3 top-20 h-[400px] w-[500px] rounded-full bg-violet-500/[0.03] blur-[100px]" />
       </div>
 
-      <div className="relative mx-auto max-w-3xl px-6 py-10">
+      <div className="relative mx-auto max-w-3xl px-4 py-10 sm:px-6">
         {/* Page header */}
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <PageHeader

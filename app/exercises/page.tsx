@@ -108,7 +108,7 @@ export default function ExercisesPage() {
 
   return (
     <div className="relative min-h-[calc(100vh-73px)] overflow-hidden">
-      <div className="relative mx-auto max-w-3xl px-6 py-10">
+      <div className="relative mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <PageHeader
           title="Micro Exercícios"
           subtitle="Exercícios rápidos de uma pergunta com feedback instantâneo e XP."

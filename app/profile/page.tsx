@@ -53,7 +53,7 @@ export default async function ProfilePage() {
         <div className="absolute left-1/2 top-0 h-[300px] w-[500px] -translate-x-1/2 rounded-full bg-mira-500/[0.05] blur-[120px]" />
       </div>
 
-      <div className="relative mx-auto max-w-2xl px-6 py-10">
+      <div className="relative mx-auto max-w-2xl px-4 py-10 sm:px-6">
         {/* User Info */}
         <div className="mb-8 flex items-start gap-4">
           <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-base-700 ring-2 ring-base-500/30 text-2xl font-display font-bold text-base-200">

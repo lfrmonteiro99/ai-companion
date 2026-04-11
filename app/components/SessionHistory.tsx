@@ -94,19 +94,21 @@ export default function SessionHistory({ sessions }: SessionHistoryProps) {
   return (
     <div>
       {/* Filter tabs */}
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-6 flex flex-wrap gap-2" role="tablist" aria-label="Filtrar sessões por tipo">
         {FILTER_TABS.map((tab) => (
           <button
             key={tab.key}
+            role="tab"
+            aria-selected={activeFilter === tab.key}
             onClick={() => setActiveFilter(tab.key)}
-            className={`rounded-full px-4 py-1.5 text-xs font-medium tracking-wide transition-all duration-200 ${
+            className={`rounded-full px-4 py-1.5 text-xs font-medium tracking-wide transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50 ${
               activeFilter === tab.key
                 ? "bg-indigo-500 text-white shadow-[0_0_12px_rgba(99,102,241,0.3)]"
                 : "bg-base-700/80 text-base-300 hover:bg-base-600/80 hover:text-base-100"
             }`}
           >
             <span className="flex items-center gap-1.5">
-              {tab.key === "all" && <Filter size={12} />}
+              {tab.key === "all" && <Filter size={12} aria-hidden="true" />}
               {tab.label}
             </span>
           </button>

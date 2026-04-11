@@ -23,7 +23,7 @@ export default async function Home() {
         <div className="absolute bottom-0 left-1/2 h-[300px] w-[800px] -translate-x-1/2 rounded-full bg-valeria-500/[0.04] blur-[120px]" />
       </div>
 
-      <div className="relative mx-auto max-w-5xl px-6 py-10">
+      <div className="relative mx-auto max-w-5xl px-4 py-10 sm:px-6">
         {!dashboard ? (
           <div className="rounded-2xl border border-base-500/40 bg-base-800/85 p-8 text-center backdrop-blur-md">
             <h1 className="mb-2 font-display text-3xl font-semibold text-base-50">
