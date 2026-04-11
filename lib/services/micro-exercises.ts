@@ -70,7 +70,7 @@ async function ensureSeededExercises() {
       prompt: exercise.prompt,
       difficulty: exercise.difficulty,
       targetSkill: exercise.targetSkill,
-      options: exercise.options ?? null,
+      options: exercise.options ?? undefined,
       answerKey: exercise.answerKey,
       explanation: exercise.explanation,
       tags: exercise.tags,
