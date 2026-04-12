@@ -8,6 +8,7 @@ import { retrieveMemories, extractMemories } from "@/lib/services/memory";
 import { updateMood } from "@/lib/services/mood";
 import { checkMilestones } from "@/lib/services/milestone";
 import { trackDirectHintUse } from "@/lib/services/hint-usage";
+import { evaluateSingleMessage, shouldEvaluate } from "@/lib/services/coaching";
 import { sanitizeUserMessage } from "@/lib/utils/sanitize";
 import { chatStreamLimiter } from "@/lib/utils/rate-limit";
 import { logger } from "@/lib/utils/logger";
@@ -25,6 +26,7 @@ const sendMessageSchema = z.object({
   mode: z.enum(["practice", "scenario", "challenge"]).optional(),
   scenarioId: z.string().optional(),
   attemptId: z.string().optional(),
+  enableCoaching: z.boolean().optional(),
 });
 
 /**
@@ -205,6 +207,35 @@ export async function POST(req: NextRequest) {
           mood,
           milestones,
         })}\n\n`));
+
+        // Real-time coaching evaluation (async, after done event)
+        const userMsgCount = recentMessages.filter((m) => m.senderRole === "user").length;
+        if (body.enableCoaching && shouldEvaluate(userMsgCount, message)) {
+          try {
+            const coachingResult = await evaluateSingleMessage({
+              userMessage: message,
+              agentReply: fullReply,
+              agent,
+              recentMessages: chatHistory,
+              relationshipState: {
+                stage: state.stage,
+                currentMood: mood,
+                trust: state.trust,
+                comfort: state.comfort,
+                tension: state.tension,
+                respect: state.respect,
+              },
+              messageIndex: userMsgCount,
+            });
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: "coaching",
+              ...coachingResult,
+              messageIndex: userMsgCount,
+            })}\n\n`));
+          } catch (err) {
+            log.error("Coaching evaluation failed in stream", err, bgContext);
+          }
+        }
 
         controller.close();
       } catch (error) {

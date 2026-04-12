@@ -215,3 +215,13 @@ export interface Achievement {
   condition: string;
   icon: string;
 }
+
+// --- Real-Time Coaching ---
+
+export interface CoachingFeedback {
+  impact: "positive" | "neutral" | "negative";
+  feedback: string;
+  suggestion: string | null;
+  dominantSkill: string;
+  scores: Record<string, number>;
+}

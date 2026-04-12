@@ -2,10 +2,12 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw, Settings as SettingsIcon, X, Send, Lightbulb } from "lucide-react";
+import { RotateCcw, Settings as SettingsIcon, X, Send, Lightbulb, GraduationCap } from "lucide-react";
 import Image from "next/image";
 import MessageBubble from "./MessageBubble";
 import SettingsDrawer from "./SettingsDrawer";
+import CoachingSummaryBar from "./CoachingSummaryBar";
+import type { CoachingFeedback } from "@/lib/types";
 
 interface Message {
   id: string;
@@ -86,6 +88,9 @@ export default function ChatWindow({
   const [hintError, setHintError] = useState<string | null>(null);
   const [hintCooldownUntil, setHintCooldownUntil] = useState<number>(0);
   const [hintCooldownLeft, setHintCooldownLeft] = useState<number>(0);
+  const [coachingEnabled, setCoachingEnabled] = useState(false);
+  const [coachingMap, setCoachingMap] = useState<Map<number, CoachingFeedback>>(new Map());
+  const [coachingHistory, setCoachingHistory] = useState<CoachingFeedback[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -169,7 +174,7 @@ export default function ChatWindow({
     setShowTyping(true);
 
     try {
-      const res = await fetch("/api/chat/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, agentId, message: text, mode, scenarioId: scenarioData?.id, attemptId }) });
+      const res = await fetch("/api/chat/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId, agentId, message: text, mode, scenarioId: scenarioData?.id, attemptId, enableCoaching: coachingEnabled }) });
       await new Promise((r) => setTimeout(r, typingDelay));
       setShowTyping(false);
 
@@ -192,6 +197,11 @@ export default function ChatWindow({
             const d = JSON.parse(line.slice(6));
             if (d.type === "token") { acc += d.content; setStreamingContent(acc); }
             else if (d.type === "done") { if (!convId) setConvId(d.conversationId); if (d.milestones?.length && showMilestones) setMilestones((p) => [...p, ...d.milestones]); }
+            else if (d.type === "coaching" && coachingEnabled) {
+              const cf = d as CoachingFeedback & { messageIndex: number };
+              setCoachingMap((prev) => new Map(prev).set(cf.messageIndex, cf));
+              setCoachingHistory((prev) => [...prev, cf]);
+            }
           } catch { /* skip */ }
         }
       }
@@ -264,6 +274,18 @@ export default function ChatWindow({
             </a>
           </div>
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCoachingEnabled(!coachingEnabled)}
+              className={`rounded-lg p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50 ${
+                coachingEnabled
+                  ? "bg-amber-500/15 text-amber-400"
+                  : "text-base-400 hover:bg-base-700/60 hover:text-base-200"
+              }`}
+              aria-label={coachingEnabled ? "Desativar coaching em tempo real" : "Ativar coaching em tempo real"}
+              aria-pressed={coachingEnabled}
+            >
+              <GraduationCap size={15} aria-hidden="true" />
+            </button>
             <button
               onClick={() => setShowResetConfirm(true)}
               className="rounded-lg p-1.5 text-base-400 transition-colors hover:bg-base-700/60 hover:text-rose-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50"
@@ -448,23 +470,33 @@ export default function ChatWindow({
 
               {/* Messages */}
               <AnimatePresence initial={false}>
-                {messages.map((msg) => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 10, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ duration: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
-                  >
-                    <MessageBubble
-                      role={msg.senderRole}
-                      content={msg.content}
-                      agentName={msg.senderRole === "assistant" ? agentName : undefined}
-                      agentAvatar={msg.senderRole === "assistant" ? agentAvatar : undefined}
-                      agentId={agentId}
-                      timestamp={msg.createdAt}
-                    />
-                  </motion.div>
-                ))}
+                {(() => {
+                  let userIdx = -1;
+                  return messages.map((msg) => {
+                    if (msg.senderRole === "user") userIdx++;
+                    const coaching = msg.senderRole === "user" && coachingEnabled
+                      ? coachingMap.get(userIdx) || undefined
+                      : undefined;
+                    return (
+                      <motion.div
+                        key={msg.id}
+                        initial={{ opacity: 0, y: 10, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ duration: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
+                      >
+                        <MessageBubble
+                          role={msg.senderRole}
+                          content={msg.content}
+                          agentName={msg.senderRole === "assistant" ? agentName : undefined}
+                          agentAvatar={msg.senderRole === "assistant" ? agentAvatar : undefined}
+                          agentId={agentId}
+                          timestamp={msg.createdAt}
+                          coaching={coaching}
+                        />
+                      </motion.div>
+                    );
+                  });
+                })()}
               </AnimatePresence>
 
               {/* Streaming message */}
@@ -509,6 +541,11 @@ export default function ChatWindow({
           {/* Bottom fade */}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-8 bg-gradient-to-t from-base-950 to-transparent" />
         </div>
+
+        {/* Coaching summary bar */}
+        {coachingEnabled && coachingHistory.length > 0 && (
+          <CoachingSummaryBar coachingHistory={coachingHistory} />
+        )}
 
         {/* Input area */}
         <div className="border-t border-base-500/30 px-4 py-2.5 backdrop-blur-md bg-base-950/60">
