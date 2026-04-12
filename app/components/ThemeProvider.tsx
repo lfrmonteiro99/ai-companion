@@ -19,18 +19,31 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     const stored = localStorage.getItem("theme") as Theme | null;
-    if (stored) setTheme(stored);
-    else if (window.matchMedia("(prefers-color-scheme: light)").matches) setTheme("light");
+    if (stored) {
+      setTheme(stored);
+    } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+      setTheme("light");
+    } else {
+      setTheme("dark");
+    }
     setMounted(true);
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
-    document.documentElement.classList.toggle("dark", theme === "dark");
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
     localStorage.setItem("theme", theme);
   }, [theme, mounted]);
 
-  if (!mounted) return <div className="dark">{children}</div>;
+  // SSR: always render dark to prevent flash
+  if (!mounted) {
+    return <div className="dark">{children}</div>;
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme: () => setTheme((p) => (p === "dark" ? "light" : "dark")) }}>

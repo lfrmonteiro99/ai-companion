@@ -3,11 +3,25 @@
 @tailwind utilities;
 
 @layer base {
+  /* --- Dark mode (default) --- */
+  .dark body,
   body {
     background-color: #06060b;
     color: #c8c8dc;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* --- Light mode overrides --- */
+  :root:not(.dark) body {
+    background-color: #f5f5fa;
+    color: #1a1a2a;
+  }
+
+  :root:not(.dark) {
+    --light-surface-bg: rgba(255, 255, 255, 0.85);
+    --light-surface-border: rgba(0, 0, 0, 0.08);
+    --light-surface-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
 
   /* Per-agent accent system — set on wrapper via className */
@@ -47,6 +61,13 @@
     --agent-subtle: rgba(249, 115, 22, 0.08);
   }
 
+  /* Light mode agent subtles — slightly stronger for visibility on white */
+  :root:not(.dark) .agent-valeria { --agent-subtle: rgba(232, 48, 90, 0.06); --agent-glow: rgba(232, 48, 90, 0.15); }
+  :root:not(.dark) .agent-luna    { --agent-subtle: rgba(232, 121, 168, 0.06); --agent-glow: rgba(232, 121, 168, 0.12); }
+  :root:not(.dark) .agent-mira    { --agent-subtle: rgba(99, 102, 241, 0.06); --agent-glow: rgba(99, 102, 241, 0.15); }
+  :root:not(.dark) .agent-sable   { --agent-subtle: rgba(147, 51, 234, 0.06); --agent-glow: rgba(147, 51, 234, 0.15); }
+  :root:not(.dark) .agent-kira    { --agent-subtle: rgba(249, 115, 22, 0.06); --agent-glow: rgba(249, 115, 22, 0.12); }
+
   /* Default accent (used on non-agent pages) */
   :root {
     --agent-accent: #818cf8;
@@ -58,7 +79,7 @@
 }
 
 @layer utilities {
-  /* Glass surfaces */
+  /* --- Glass surfaces (dark) --- */
   .surface-1 {
     background: rgba(19, 19, 30, 0.85);
     backdrop-filter: blur(12px);
@@ -81,12 +102,36 @@
     box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
   }
 
-  /* Per-agent chat backgrounds */
+  /* --- Glass surfaces (light) --- */
+  :root:not(.dark) .surface-1 {
+    background: rgba(255, 255, 255, 0.80);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  :root:not(.dark) .surface-2 {
+    background: rgba(255, 255, 255, 0.90);
+    border: 1px solid rgba(0, 0, 0, 0.10);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+  :root:not(.dark) .surface-3 {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  }
+
+  /* Per-agent chat backgrounds — dark */
   .chat-bg-valeria { background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(232,48,90,0.12) 0%, transparent 60%), #06060b; }
   .chat-bg-luna    { background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(232,121,168,0.10) 0%, transparent 60%), #06060b; }
   .chat-bg-mira    { background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99,102,241,0.13) 0%, transparent 60%), #06060b; }
   .chat-bg-sable   { background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(147,51,234,0.12) 0%, transparent 60%), #06060b; }
   .chat-bg-kira    { background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(249,115,22,0.10) 0%, transparent 60%), #06060b; }
+
+  /* Per-agent chat backgrounds — light */
+  :root:not(.dark) .chat-bg-valeria { background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(232,48,90,0.06) 0%, transparent 60%), #f5f5fa; }
+  :root:not(.dark) .chat-bg-luna    { background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(232,121,168,0.05) 0%, transparent 60%), #f5f5fa; }
+  :root:not(.dark) .chat-bg-mira    { background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99,102,241,0.07) 0%, transparent 60%), #f5f5fa; }
+  :root:not(.dark) .chat-bg-sable   { background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(147,51,234,0.06) 0%, transparent 60%), #f5f5fa; }
+  :root:not(.dark) .chat-bg-kira    { background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(249,115,22,0.05) 0%, transparent 60%), #f5f5fa; }
 
   /* Per-agent card hover glow */
   .card-glow-valeria { box-shadow: 0 0 0 1px rgba(232,48,90,0.2), 0 8px 32px rgba(232,48,90,0.12); }
@@ -105,6 +150,60 @@
   .shadow-surface-2 {
     box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
   }
+  :root:not(.dark) .shadow-surface-2 {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+}
+
+/* --- Light mode color overrides for Tailwind classes --- */
+:root:not(.dark) {
+  /* Remap base scale for light mode */
+  /* base-950 (darkest) -> lightest background, base-50 (lightest) -> darkest text */
+}
+
+/* Core background/text overrides */
+:root:not(.dark) .bg-base-950 { background-color: #f5f5fa; }
+:root:not(.dark) .bg-base-950\/80 { background-color: rgba(245, 245, 250, 0.80); }
+:root:not(.dark) .bg-base-950\/60 { background-color: rgba(245, 245, 250, 0.60); }
+:root:not(.dark) .bg-base-900 { background-color: #ededf4; }
+:root:not(.dark) .bg-base-800 { background-color: #e4e4ee; }
+:root:not(.dark) .bg-base-800\/85 { background-color: rgba(228, 228, 238, 0.85); }
+:root:not(.dark) .bg-base-800\/70 { background-color: rgba(228, 228, 238, 0.70); }
+:root:not(.dark) .bg-base-800\/60 { background-color: rgba(228, 228, 238, 0.60); }
+:root:not(.dark) .bg-base-800\/50 { background-color: rgba(228, 228, 238, 0.50); }
+:root:not(.dark) .bg-base-700 { background-color: #d8d8e6; }
+:root:not(.dark) .bg-base-700\/80 { background-color: rgba(216, 216, 230, 0.80); }
+:root:not(.dark) .bg-base-700\/60 { background-color: rgba(216, 216, 230, 0.60); }
+:root:not(.dark) .bg-base-700\/50 { background-color: rgba(216, 216, 230, 0.50); }
+:root:not(.dark) .bg-base-700\/40 { background-color: rgba(216, 216, 230, 0.40); }
+:root:not(.dark) .bg-base-600\/80 { background-color: rgba(200, 200, 218, 0.80); }
+:root:not(.dark) .bg-base-600\/50 { background-color: rgba(200, 200, 218, 0.50); }
+
+/* Text color overrides for light mode */
+:root:not(.dark) .text-base-50 { color: #1a1a2a; }
+:root:not(.dark) .text-base-100 { color: #22223a; }
+:root:not(.dark) .text-base-200 { color: #2e2e4a; }
+:root:not(.dark) .text-base-300 { color: #4a4a6a; }
+:root:not(.dark) .text-base-400 { color: #6b6b8a; }
+:root:not(.dark) .text-base-500 { color: #9a9ab0; }
+
+/* Border overrides for light mode */
+:root:not(.dark) .border-base-500\/30 { border-color: rgba(0, 0, 0, 0.10); }
+:root:not(.dark) .border-base-500\/40 { border-color: rgba(0, 0, 0, 0.10); }
+:root:not(.dark) .border-base-500\/20 { border-color: rgba(0, 0, 0, 0.06); }
+:root:not(.dark) .border-base-600\/40 { border-color: rgba(0, 0, 0, 0.08); }
+:root:not(.dark) .border-base-600\/60 { border-color: rgba(0, 0, 0, 0.10); }
+
+/* Ring overrides for light mode */
+:root:not(.dark) .ring-base-500\/30 { --tw-ring-color: rgba(0, 0, 0, 0.10); }
+
+/* Gradient fades for light mode */
+:root:not(.dark) .from-base-950 { --tw-gradient-from: #f5f5fa; }
+:root:not(.dark) .to-base-300 { --tw-gradient-to: #4a4a6a; }
+
+/* Gradient text in header */
+:root:not(.dark) .bg-gradient-to-r.from-base-50.to-base-300 {
+  background-image: linear-gradient(to right, #1a1a2a, #4a4a6a);
 }
 
 /* Accessibility: respect reduced motion preference */
