@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Settings, LogOut, Users, Target, Dumbbell, Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import SettingsDrawer from "./SettingsDrawer";
 import NotificationBell from "./NotificationBell";
 
 const NAV_LINKS = [
@@ -16,7 +15,6 @@ const NAV_LINKS = [
 
 export default function Header() {
   const pathname = usePathname();
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [user, setUser] = useState<{ email?: string; id?: string } | null>(null);
   const [dbUserId, setDbUserId] = useState<string | null>(null);
 
@@ -91,16 +89,9 @@ export default function Header() {
                 Entrar
               </a>
             )}
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className="rounded-lg p-2 text-base-400 transition-colors hover:bg-base-700/60 hover:text-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50 md:hidden"
-              aria-label="Definições"
-            >
-              <Settings size={18} aria-hidden="true" />
-            </button>
             <a
               href="/settings"
-              className="hidden rounded-lg p-2 text-base-400 transition-colors hover:bg-base-700/60 hover:text-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50 md:block"
+              className="rounded-lg p-2 text-base-400 transition-colors hover:bg-base-700/60 hover:text-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50"
               aria-label="Definições"
             >
               <Settings size={18} aria-hidden="true" />
@@ -133,7 +124,6 @@ export default function Header() {
           </nav>
         )}
       </header>
-      <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </>
   );
 }

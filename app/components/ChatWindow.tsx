@@ -276,7 +276,7 @@ export default function ChatWindow({
           <div className="flex items-center gap-1">
             <button
               onClick={() => setCoachingEnabled(!coachingEnabled)}
-              className={`rounded-lg p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50 ${
+              className={`flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50 ${
                 coachingEnabled
                   ? "bg-amber-500/15 text-amber-400"
                   : "text-base-400 hover:bg-base-700/60 hover:text-base-200"
@@ -284,7 +284,8 @@ export default function ChatWindow({
               aria-label={coachingEnabled ? "Desativar coaching em tempo real" : "Ativar coaching em tempo real"}
               aria-pressed={coachingEnabled}
             >
-              <GraduationCap size={15} aria-hidden="true" />
+              <GraduationCap size={14} aria-hidden="true" />
+              <span className="hidden sm:inline">{coachingEnabled ? "Coach ON" : "Coach"}</span>
             </button>
             <button
               onClick={() => setShowResetConfirm(true)}
