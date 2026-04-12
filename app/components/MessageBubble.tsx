@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import CoachingBadge from "./CoachingBadge";
+import type { CoachingFeedback } from "@/lib/types";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
@@ -9,6 +11,7 @@ interface MessageBubbleProps {
   agentAvatar?: string;
   agentId?: string;
   timestamp?: string;
+  coaching?: CoachingFeedback;
 }
 
 function formatTime(ts?: string): string {
@@ -20,14 +23,14 @@ function formatTime(ts?: string): string {
   const diffHours = Math.floor(diffMin / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMin < 1) return "now";
+  if (diffMin < 1) return "agora";
   if (diffMin < 60) return `${diffMin}m`;
   if (diffHours < 24) return `${diffHours}h`;
-  if (diffDays === 1) return "yesterday";
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  if (diffDays === 1) return "ontem";
+  return date.toLocaleDateString("pt-BR", { month: "short", day: "numeric" });
 }
 
-export default function MessageBubble({ role, content, agentName, agentAvatar, timestamp }: MessageBubbleProps) {
+export default function MessageBubble({ role, content, agentName, agentAvatar, timestamp, coaching }: MessageBubbleProps) {
   const isUser = role === "user";
   const timeStr = formatTime(timestamp);
 
@@ -61,6 +64,10 @@ export default function MessageBubble({ role, content, agentName, agentAvatar, t
           <div className={`mt-0.5 text-[10px] ${isUser ? "text-right" : "text-left"} text-base-400`}>
             {timeStr}
           </div>
+        )}
+        {/* Real-time coaching badge — appears below user messages */}
+        {isUser && coaching && (
+          <CoachingBadge coaching={coaching} />
         )}
       </div>
     </div>
