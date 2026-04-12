@@ -93,11 +93,18 @@ export default function Header() {
             )}
             <button
               onClick={() => setSettingsOpen(true)}
-              className="rounded-lg p-2 text-base-400 transition-colors hover:bg-base-700/60 hover:text-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50"
+              className="rounded-lg p-2 text-base-400 transition-colors hover:bg-base-700/60 hover:text-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50 md:hidden"
               aria-label="Definições"
             >
               <Settings size={18} aria-hidden="true" />
             </button>
+            <a
+              href="/settings"
+              className="hidden rounded-lg p-2 text-base-400 transition-colors hover:bg-base-700/60 hover:text-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mira-500/50 md:block"
+              aria-label="Definições"
+            >
+              <Settings size={18} aria-hidden="true" />
+            </a>
           </div>
         </div>
 
