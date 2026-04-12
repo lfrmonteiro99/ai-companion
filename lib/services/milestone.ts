@@ -1,20 +1,23 @@
 import { prisma } from "@/lib/prisma";
 
 const STAGE_NARRATIVES: Record<number, string> = {
-  1: "She seems more curious about you now.",
-  2: "She is clearly engaged — your conversations have depth.",
-  3: "She is invested in you. This feels real.",
-  4: "Something deeper has unlocked between you two.",
+  1: "Ela parece mais curiosa sobre ti agora.",
+  2: "Ela está claramente envolvida — as vossas conversas têm profundidade.",
+  3: "Ela está investida em ti. Isto parece real.",
+  4: "Algo mais profundo desbloqueou entre vocês.",
 };
 
 const MILESTONE_DEFINITIONS: { type: string; check: (state: StateSnapshot) => boolean; label: string }[] = [
-  { type: "first_high_trust", check: (s) => s.trust >= 60, label: "She is starting to trust you." },
-  { type: "first_high_comfort", check: (s) => s.comfort >= 60, label: "She feels comfortable with you." },
-  { type: "first_high_tension", check: (s) => s.tension >= 70, label: "There is real tension between you." },
-  { type: "first_high_respect", check: (s) => s.respect >= 70, label: "She clearly respects you." },
-  { type: "first_attachment", check: (s) => s.attachment >= 50, label: "She is becoming attached." },
-  { type: "first_deep_conversation", check: (s) => s.conversationDepth >= 60, label: "Your conversations go deep." },
-  { type: "first_openness", check: (s) => s.emotionalOpenness >= 50, label: "She is opening up to you." },
+  // First tier — achievable in 8-12 good messages
+  { type: "first_interest", check: (s) => s.trust >= 35 && s.comfort >= 30, label: "Ela parece genuinamente interessada." },
+  { type: "first_high_trust", check: (s) => s.trust >= 50, label: "Ela está a começar a confiar em ti." },
+  { type: "first_high_comfort", check: (s) => s.comfort >= 50, label: "Ela sente-se confortável contigo." },
+  // Second tier — requires sustained quality
+  { type: "first_high_tension", check: (s) => s.tension >= 55, label: "Há tensão real entre vocês." },
+  { type: "first_high_respect", check: (s) => s.respect >= 60, label: "Ela respeita-te claramente." },
+  { type: "first_attachment", check: (s) => s.attachment >= 40, label: "Ela está a criar ligação." },
+  { type: "first_deep_conversation", check: (s) => s.conversationDepth >= 45, label: "As vossas conversas são profundas." },
+  { type: "first_openness", check: (s) => s.emotionalOpenness >= 40, label: "Ela está a abrir-se contigo." },
 ];
 
 interface StateSnapshot {
