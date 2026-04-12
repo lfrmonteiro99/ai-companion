@@ -251,7 +251,7 @@ export default function ChatWindow({
     <>
       <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} showMilestones={showMilestones} onToggleMilestones={toggleMilestones} />
 
-      <div className={`flex h-[calc(100vh-73px)] flex-col ${themeClass}`}>
+      <div className={`flex h-[calc(100dvh-105px)] md:h-[calc(100dvh-73px)] flex-col ${themeClass}`}>
         {/* Chat header */}
         <div className="flex items-center justify-between border-b border-base-500/30 px-4 py-2.5 backdrop-blur-md bg-base-950/60">
           <div className="flex items-center gap-2.5">
@@ -285,7 +285,7 @@ export default function ChatWindow({
               aria-pressed={coachingEnabled}
             >
               <GraduationCap size={14} aria-hidden="true" />
-              <span className="hidden sm:inline">{coachingEnabled ? "Coach ON" : "Coach"}</span>
+              <span>{coachingEnabled ? "Coach ON" : "Coach"}</span>
             </button>
             <button
               onClick={() => setShowResetConfirm(true)}
