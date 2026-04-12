@@ -46,6 +46,7 @@ export default function CoachingSummaryBar({ coachingHistory }: CoachingSummaryB
       label: SKILL_LABELS[skill] || skill,
       score: Math.round(total / count),
       isInverse: INVERSE_SKILLS.has(skill),
+      count,
     }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 4);
