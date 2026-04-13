@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronUp, ChevronDown, GraduationCap } from "lucide-react";
+import { ChevronUp, ChevronDown, GraduationCap, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import InfoTooltip from "./InfoTooltip";
 import type { CoachingFeedback } from "@/lib/types";
 
 interface CoachingSummaryBarProps {
@@ -22,37 +23,128 @@ const SKILL_LABELS: Record<string, string> = {
   conversationalMomentum: "Momentum",
 };
 
+const SKILL_DESCRIPTIONS: Record<string, string> = {
+  confidence: "Quão segura e firme soa a tua mensagem, sem cair em arrogância.",
+  warmth: "Quanto calor humano e empatia transmites em vez de soares distante.",
+  curiosity: "Se fazes perguntas que mostram interesse genuíno por ela.",
+  calibration: "Se ajustas o tom e a profundidade ao momento da conversa.",
+  authenticity: "Voz própria — sem soar a script, copy-paste ou clichés.",
+  pressureLevel: "Quanta pressão exerces sobre ela. Quanto menos, melhor.",
+  awkwardness: "Desconforto que crias na conversa. Quanto menos, melhor.",
+  emotionalIntelligence: "Capacidade de ler e responder bem às emoções dela.",
+  boundaryRespect: "Respeito pelo ritmo e pelos limites dela.",
+  conversationalMomentum: "Capacidade de manter a conversa viva e a fluir.",
+};
+
 const INVERSE_SKILLS = new Set(["pressureLevel", "awkwardness"]);
+
+type Trend = "up" | "down" | "flat";
+
+function calcTrend(values: number[]): Trend {
+  if (values.length < 4) return "flat";
+  const half = Math.max(2, Math.floor(values.length / 2));
+  const earlier = values.slice(0, values.length - half);
+  const recent = values.slice(values.length - half);
+  if (earlier.length === 0) return "flat";
+  const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+  const diff = avg(recent) - avg(earlier);
+  if (diff > 5) return "up";
+  if (diff < -5) return "down";
+  return "flat";
+}
+
+interface SkillRow {
+  skill: string;
+  label: string;
+  description: string;
+  score: number;
+  displayScore: number;
+  isInverse: boolean;
+  trend: Trend;
+  count: number;
+}
+
+function buildVerdict(rows: SkillRow[]): string | null {
+  if (rows.length < 2) return null;
+  const sorted = [...rows].sort((a, b) => b.displayScore - a.displayScore);
+  const top = sorted[0];
+  const bottom = sorted[sorted.length - 1];
+  const gap = top.displayScore - bottom.displayScore;
+  const lower = (s: string) => s.toLowerCase();
+
+  if (top.displayScore >= 70 && bottom.displayScore < 50) {
+    return `Forte em ${lower(top.label)} (${top.displayScore}). ${top.label === bottom.label ? "" : `${bottom.label} (${bottom.displayScore}) precisa de atenção.`}`;
+  }
+  if (gap < 12) {
+    return `Equilíbrio entre as skills — nada se destaca em força ou fragilidade.`;
+  }
+  if (bottom.displayScore < 45) {
+    return `Atenção a ${lower(bottom.label)} (${bottom.displayScore}) — está a puxar a conversa para baixo.`;
+  }
+  return `A tua maior força agora é ${lower(top.label)} (${top.displayScore}).`;
+}
+
+function TrendIcon({ trend }: { trend: Trend }) {
+  if (trend === "up") {
+    return (
+      <ArrowUp
+        size={11}
+        className="text-emerald-400"
+        aria-label="A melhorar"
+      />
+    );
+  }
+  if (trend === "down") {
+    return (
+      <ArrowDown
+        size={11}
+        className="text-rose-400"
+        aria-label="A piorar"
+      />
+    );
+  }
+  return <Minus size={11} className="text-base-500" aria-label="Estável" />;
+}
 
 export default function CoachingSummaryBar({ coachingHistory }: CoachingSummaryBarProps) {
   const [expanded, setExpanded] = useState(false);
 
   if (coachingHistory.length === 0) return null;
 
-  // Aggregate scores across all coaching feedbacks
-  const scoreAcc: Record<string, { total: number; count: number }> = {};
+  // Aggregate scores and per-skill trend across all coaching feedbacks
+  const scoreAcc: Record<string, { total: number; count: number; series: number[] }> = {};
   for (const c of coachingHistory) {
     for (const [skill, score] of Object.entries(c.scores)) {
       if (typeof score !== "number") continue;
-      if (!scoreAcc[skill]) scoreAcc[skill] = { total: 0, count: 0 };
+      if (!scoreAcc[skill]) scoreAcc[skill] = { total: 0, count: 0, series: [] };
       scoreAcc[skill].total += score;
       scoreAcc[skill].count += 1;
+      const display = INVERSE_SKILLS.has(skill) ? 100 - score : score;
+      scoreAcc[skill].series.push(display);
     }
   }
 
-  const avgScores = Object.entries(scoreAcc)
-    .map(([skill, { total, count }]) => ({
-      skill,
-      label: SKILL_LABELS[skill] || skill,
-      score: Math.round(total / count),
-      isInverse: INVERSE_SKILLS.has(skill),
-      count,
-    }))
+  const rows: SkillRow[] = Object.entries(scoreAcc)
+    .map(([skill, { total, count, series }]) => {
+      const score = Math.round(total / count);
+      const isInverse = INVERSE_SKILLS.has(skill);
+      return {
+        skill,
+        label: SKILL_LABELS[skill] || skill,
+        description: SKILL_DESCRIPTIONS[skill] || "Skill avaliada pelo coach.",
+        score,
+        displayScore: isInverse ? 100 - score : score,
+        isInverse,
+        trend: calcTrend(series),
+        count,
+      };
+    })
     .sort((a, b) => b.count - a.count)
     .slice(0, 4);
 
   const positiveCount = coachingHistory.filter((c) => c.impact === "positive").length;
   const total = coachingHistory.length;
+  const verdict = buildVerdict(rows);
 
   return (
     <motion.div
@@ -60,21 +152,56 @@ export default function CoachingSummaryBar({ coachingHistory }: CoachingSummaryB
       animate={{ opacity: 1, y: 0 }}
       className="border-t border-base-500/20 bg-base-950/40 backdrop-blur-sm"
     >
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center justify-between px-4 py-2 text-xs text-base-400 hover:text-base-300 transition-colors"
-        aria-expanded={expanded}
-        aria-label="Resumo do coaching"
-      >
-        <span className="flex items-center gap-1.5">
+      <div className="flex w-full items-center justify-between px-4 py-2 text-xs text-base-400">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex flex-1 items-center gap-1.5 text-left transition-colors hover:text-base-300"
+          aria-expanded={expanded}
+          aria-label="Resumo do coaching"
+        >
           <GraduationCap size={13} aria-hidden="true" />
           <span className="font-medium">Coach</span>
           <span className="text-base-500">
             {positiveCount}/{total} positivas
           </span>
-        </span>
-        {expanded ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
-      </button>
+        </button>
+        <div className="flex items-center gap-1.5">
+          <InfoTooltip
+            label="Como ler o coach"
+            align="end"
+            content={
+              <div className="space-y-1.5">
+                <p className="font-semibold text-base-50">Como ler o coach</p>
+                <p>
+                  Após cada mensagem tua, o coach avalia o impacto e atualiza
+                  estas skills. Cada barra é a média da sessão.
+                </p>
+                <ul className="space-y-0.5 text-base-300">
+                  <li>
+                    <span className="text-emerald-400">●</span> 70+ — forte
+                  </li>
+                  <li>
+                    <span className="text-amber-400">●</span> 45–69 — a desenvolver
+                  </li>
+                  <li>
+                    <span className="text-rose-400">●</span> abaixo de 45 — precisa atenção
+                  </li>
+                </ul>
+                <p className="text-base-300">
+                  As setas comparam as últimas mensagens com o início da sessão.
+                </p>
+              </div>
+            }
+          />
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="rounded p-0.5 text-base-400 hover:text-base-300"
+            aria-label={expanded ? "Recolher" : "Expandir"}
+          >
+            {expanded ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
+          </button>
+        </div>
+      </div>
 
       <AnimatePresence>
         {expanded && (
@@ -85,30 +212,53 @@ export default function CoachingSummaryBar({ coachingHistory }: CoachingSummaryB
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-3 space-y-2">
-              {avgScores.map(({ skill, label, score, isInverse }) => {
-                // For inverse skills, display score shows how GOOD it is (100 - raw)
-                const displayScore = isInverse ? 100 - score : score;
-                const barColor =
-                  displayScore >= 70 ? "bg-emerald-500" :
-                  displayScore >= 45 ? "bg-amber-500" :
-                  "bg-rose-500";
+            <div className="space-y-2 px-4 pb-3">
+              {verdict && (
+                <p className="rounded-lg border border-base-500/20 bg-base-800/40 px-2.5 py-1.5 text-[11px] leading-snug text-base-200">
+                  {verdict}
+                </p>
+              )}
+              <div className="space-y-2">
+                {rows.map(({ skill, label, description, displayScore, trend }) => {
+                  const barColor =
+                    displayScore >= 70
+                      ? "bg-emerald-500"
+                      : displayScore >= 45
+                        ? "bg-amber-500"
+                        : "bg-rose-500";
 
-                return (
-                  <div key={skill} className="flex items-center gap-2">
-                    <span className="w-24 shrink-0 text-[10px] text-base-400 truncate">{label}</span>
-                    <div className="flex-1 h-1.5 rounded-full bg-base-700/60 overflow-hidden">
-                      <motion.div
-                        className={`h-full rounded-full ${barColor}`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${displayScore}%` }}
-                        transition={{ duration: 0.5 }}
-                      />
+                  return (
+                    <div key={skill} className="flex items-center gap-2">
+                      <span className="flex w-28 shrink-0 items-center gap-1 text-[10px] text-base-400">
+                        <span className="truncate">{label}</span>
+                        <InfoTooltip
+                          label={`O que é ${label}`}
+                          size={11}
+                          align="start"
+                          content={
+                            <div className="space-y-1">
+                              <p className="font-semibold text-base-50">{label}</p>
+                              <p>{description}</p>
+                            </div>
+                          }
+                        />
+                      </span>
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-base-700/60">
+                        <motion.div
+                          className={`h-full rounded-full ${barColor}`}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${displayScore}%` }}
+                          transition={{ duration: 0.5 }}
+                        />
+                      </div>
+                      <span className="flex w-10 shrink-0 items-center justify-end gap-0.5 text-[10px] text-base-400">
+                        <TrendIcon trend={trend} />
+                        <span>{displayScore}</span>
+                      </span>
                     </div>
-                    <span className="w-7 text-right text-[10px] text-base-400">{displayScore}</span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </motion.div>
         )}
