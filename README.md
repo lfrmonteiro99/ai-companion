@@ -1,5 +1,7 @@
 # AI Companion
 
+**Live:** https://ai-companion-kohl.vercel.app/
+
 A gamified social / dating conversation simulator. Users practice real
 conversation skills — communication, confidence, timing, social reading, and
 boundary respect — against five distinct AI personalities, each with their own
