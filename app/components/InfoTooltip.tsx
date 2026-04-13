@@ -76,7 +76,7 @@ export default function InfoTooltip({
       {open && (
         <div
           role="tooltip"
-          className={`pointer-events-none absolute z-30 w-56 rounded-lg border border-base-500/40 bg-base-800/95 px-2.5 py-2 text-[11px] leading-relaxed text-base-100 shadow-lg backdrop-blur-sm ${alignClass} ${sideClass}`}
+          className={`pointer-events-none absolute z-50 w-56 rounded-lg border border-base-500/60 bg-base-900 px-2.5 py-2 text-[11px] leading-relaxed text-base-50 shadow-xl ${alignClass} ${sideClass}`}
         >
           {content}
         </div>
