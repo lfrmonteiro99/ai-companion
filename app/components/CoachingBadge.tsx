@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronDown, ChevronUp } from "lucide-react";
+import { X, ChevronDown, ChevronUp, CheckCircle2, ArrowRight, AlertCircle } from "lucide-react";
 import type { CoachingFeedback } from "@/lib/types";
+
+type Impact = "positive" | "neutral" | "negative";
 
 interface CoachingBadgeProps {
   coaching: CoachingFeedback;
@@ -12,24 +14,31 @@ interface CoachingBadgeProps {
 
 const HINT_STORAGE_KEY = "coachingBadgeHintSeen";
 
-const IMPACT_STYLES: Record<string, { bg: string; border: string; text: string; icon: string }> = {
+type IconComponent = typeof CheckCircle2;
+
+const IMPACT_STYLES: Record<Impact, {
+  stripe: string;
+  iconBg: string;
+  label: string;
+  Icon: IconComponent;
+}> = {
   positive: {
-    bg: "bg-emerald-500/10",
-    border: "border-emerald-500/30",
-    text: "text-emerald-300",
-    icon: "✓",
+    stripe: "bg-emerald-500",
+    iconBg: "bg-emerald-500",
+    label: "Boa jogada",
+    Icon: CheckCircle2,
   },
   neutral: {
-    bg: "bg-amber-500/10",
-    border: "border-amber-500/30",
-    text: "text-amber-300",
-    icon: "→",
+    stripe: "bg-amber-500",
+    iconBg: "bg-amber-500",
+    label: "Podes ajustar",
+    Icon: ArrowRight,
   },
   negative: {
-    bg: "bg-rose-500/10",
-    border: "border-rose-500/30",
-    text: "text-rose-300",
-    icon: "!",
+    stripe: "bg-rose-500",
+    iconBg: "bg-rose-500",
+    label: "Atenção",
+    Icon: AlertCircle,
   },
 };
 
@@ -41,8 +50,8 @@ const SKILL_LABELS: Record<string, string> = {
   authenticity: "Autenticidade",
   pressureLevel: "Pressão",
   awkwardness: "Desconforto",
-  emotionalIntelligence: "Inteligência Emocional",
-  boundaryRespect: "Respeito por Limites",
+  emotionalIntelligence: "Intel. Emocional",
+  boundaryRespect: "Limites",
   conversationalMomentum: "Momentum",
 };
 
@@ -88,50 +97,70 @@ export default function CoachingBadge({ coaching, onDismiss }: CoachingBadgeProp
   if (dismissed) return null;
 
   const style = IMPACT_STYLES[coaching.impact] || IMPACT_STYLES.neutral;
+  const Icon = style.Icon;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -4, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.3, delay: 0.5 }}
-      className={`mt-1.5 rounded-xl border ${style.border} ${style.bg} text-xs`}
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
+      transition={{ duration: 0.25, delay: 0.4, ease: "easeOut" }}
+      className="mt-2 overflow-hidden rounded-xl border border-base-500/30 bg-base-800 shadow-sm"
     >
-      <div className="flex items-start gap-2 px-3 py-2">
-        <span className={`mt-0.5 text-sm font-bold ${style.text}`} aria-hidden="true">
-          {style.icon}
-        </span>
-        <div className="flex-1">
-          <p className={`leading-relaxed ${style.text}`}>{coaching.feedback}</p>
-          {showHint && hasDetail && !expanded && (
-            <button
-              onClick={handleToggleExpanded}
-              className="mt-1 inline-flex animate-pulse items-center gap-1 rounded-full bg-base-900/60 px-2 py-0.5 text-[10px] font-medium text-base-200 ring-1 ring-base-500/40 transition-colors hover:animate-none hover:bg-base-800"
-              aria-label="Ver alternativa sugerida"
-            >
-              <span aria-hidden="true">💡</span>
-              Toca para ver alternativa
-            </button>
-          )}
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          {hasDetail && (
-            <button
-              onClick={handleToggleExpanded}
-              className="rounded p-0.5 text-base-400 transition-colors hover:text-base-200"
-              aria-label={expanded ? "Colapsar detalhes" : "Expandir detalhes"}
-              aria-expanded={expanded}
-            >
-              {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-            </button>
-          )}
-          <button
-            onClick={handleDismiss}
-            className="rounded p-0.5 text-base-400 transition-colors hover:text-base-200"
-            aria-label="Fechar coaching"
+      <div className="flex items-stretch">
+        {/* Colored impact stripe */}
+        <div className={`w-1 shrink-0 ${style.stripe}`} aria-hidden="true" />
+
+        <div className="flex flex-1 items-start gap-2.5 px-3 py-2.5">
+          {/* Solid icon pill */}
+          <span
+            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${style.iconBg}`}
+            aria-hidden="true"
           >
-            <X size={12} />
-          </button>
+            <Icon size={12} className="text-white" strokeWidth={2.5} />
+          </span>
+
+          <div className="min-w-0 flex-1">
+            <div className="mb-0.5 flex items-center gap-2">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-base-300">
+                Coach
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-base-400">
+                {style.label}
+              </span>
+            </div>
+            <p className="text-xs leading-relaxed text-base-100">{coaching.feedback}</p>
+            {showHint && hasDetail && !expanded && (
+              <button
+                onClick={handleToggleExpanded}
+                className="mt-1.5 inline-flex animate-pulse items-center gap-1 rounded-full bg-base-700 px-2 py-0.5 text-[10px] font-medium text-base-100 ring-1 ring-base-500/40 transition-colors hover:animate-none hover:bg-base-600/80"
+                aria-label="Ver alternativa sugerida"
+              >
+                <span aria-hidden="true">💡</span>
+                Ver alternativa
+              </button>
+            )}
+          </div>
+
+          <div className="flex shrink-0 items-center gap-0.5">
+            {hasDetail && (
+              <button
+                onClick={handleToggleExpanded}
+                className="rounded-md p-1 text-base-300 transition-colors hover:bg-base-700 hover:text-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-base-400"
+                aria-label={expanded ? "Colapsar detalhes" : "Expandir detalhes"}
+                aria-expanded={expanded}
+              >
+                {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+            )}
+            <button
+              onClick={handleDismiss}
+              className="rounded-md p-1 text-base-300 transition-colors hover:bg-base-700 hover:text-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-base-400"
+              aria-label="Fechar coaching"
+            >
+              <X size={14} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -144,13 +173,15 @@ export default function CoachingBadge({ coaching, onDismiss }: CoachingBadgeProp
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="space-y-2 border-t border-base-500/20 px-3 py-2">
+            <div className="space-y-2.5 border-t border-base-600/40 px-3 py-2.5 pl-[calc(0.25rem+0.75rem)]">
               {coaching.suggestion && (
                 <div>
-                  <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-base-400">
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-base-300">
                     Alternativa sugerida
                   </p>
-                  <p className="italic text-base-200">&ldquo;{coaching.suggestion}&rdquo;</p>
+                  <p className="text-xs italic leading-relaxed text-base-100">
+                    &ldquo;{coaching.suggestion}&rdquo;
+                  </p>
                 </div>
               )}
               {Object.keys(coaching.scores).length > 0 && (
@@ -158,7 +189,7 @@ export default function CoachingBadge({ coaching, onDismiss }: CoachingBadgeProp
                   {Object.entries(coaching.scores).map(([skill, score]) => (
                     <span
                       key={skill}
-                      className="rounded-full bg-base-700/60 px-2 py-0.5 text-[10px] text-base-300"
+                      className="rounded-full bg-base-700 px-2 py-0.5 text-[10px] font-medium text-base-100"
                     >
                       {SKILL_LABELS[skill] || skill}: {Math.round(score as number)}
                     </span>

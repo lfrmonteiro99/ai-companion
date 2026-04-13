@@ -86,24 +86,24 @@ function buildVerdict(rows: SkillRow[]): string | null {
 
 function TrendIcon({ trend }: { trend: Trend }) {
   if (trend === "up") {
-    return (
-      <ArrowUp
-        size={11}
-        className="text-emerald-400"
-        aria-label="A melhorar"
-      />
-    );
+    return <ArrowUp size={12} className="text-emerald-500" aria-label="A melhorar" />;
   }
   if (trend === "down") {
-    return (
-      <ArrowDown
-        size={11}
-        className="text-rose-400"
-        aria-label="A piorar"
-      />
-    );
+    return <ArrowDown size={12} className="text-rose-500" aria-label="A piorar" />;
   }
-  return <Minus size={11} className="text-base-500" aria-label="Estável" />;
+  return <Minus size={12} className="text-base-300" aria-label="Estável" />;
+}
+
+function bandColor(score: number): string {
+  if (score >= 70) return "bg-emerald-500";
+  if (score >= 45) return "bg-amber-500";
+  return "bg-rose-500";
+}
+
+function overallScore(rows: SkillRow[]): number | null {
+  if (rows.length === 0) return null;
+  const sum = rows.reduce((a, r) => a + r.displayScore, 0);
+  return Math.round(sum / rows.length);
 }
 
 export default function CoachingSummaryBar({ coachingHistory }: CoachingSummaryBarProps) {
@@ -145,27 +145,48 @@ export default function CoachingSummaryBar({ coachingHistory }: CoachingSummaryB
   const positiveCount = coachingHistory.filter((c) => c.impact === "positive").length;
   const total = coachingHistory.length;
   const verdict = buildVerdict(rows);
+  const overall = overallScore(rows);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="border-t border-base-500/20 bg-base-950/40 backdrop-blur-sm"
+      className="border-t border-base-600/40 bg-base-900 shadow-coach-bar"
     >
-      <div className="flex w-full items-center justify-between px-4 py-2 text-xs text-base-400">
+      {/* Collapsed header — always visible, clearly readable */}
+      <div className="flex w-full items-center gap-3 px-4 py-2.5">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="flex flex-1 items-center gap-1.5 text-left transition-colors hover:text-base-300"
+          className="flex flex-1 items-center gap-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-base-400 rounded-md -mx-1 px-1"
           aria-expanded={expanded}
           aria-label="Resumo do coaching"
         >
-          <GraduationCap size={13} aria-hidden="true" />
-          <span className="font-medium">Coach</span>
-          <span className="text-base-500">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-base-700">
+            <GraduationCap size={13} className="text-base-100" aria-hidden="true" />
+          </span>
+          <span className="text-xs font-semibold text-base-100">Coach</span>
+          {overall !== null && (
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums ${
+                overall >= 70
+                  ? "bg-emerald-500/15 text-emerald-500"
+                  : overall >= 45
+                    ? "bg-amber-500/15 text-amber-600"
+                    : "bg-rose-500/15 text-rose-500"
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${bandColor(overall)}`}
+                aria-hidden="true"
+              />
+              {overall}
+            </span>
+          )}
+          <span className="text-xs text-base-300">
             {positiveCount}/{total} positivas
           </span>
         </button>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <InfoTooltip
             label="Como ler o coach"
             align="end"
@@ -176,18 +197,18 @@ export default function CoachingSummaryBar({ coachingHistory }: CoachingSummaryB
                   Após cada mensagem tua, o coach avalia o impacto e atualiza
                   estas skills. Cada barra é a média da sessão.
                 </p>
-                <ul className="space-y-0.5 text-base-300">
+                <ul className="space-y-0.5 text-base-200">
                   <li>
-                    <span className="text-emerald-400">●</span> 70+ — forte
+                    <span className="text-emerald-500">●</span> 70+ — forte
                   </li>
                   <li>
-                    <span className="text-amber-400">●</span> 45–69 — a desenvolver
+                    <span className="text-amber-500">●</span> 45–69 — a desenvolver
                   </li>
                   <li>
-                    <span className="text-rose-400">●</span> abaixo de 45 — precisa atenção
+                    <span className="text-rose-500">●</span> abaixo de 45 — precisa atenção
                   </li>
                 </ul>
-                <p className="text-base-300">
+                <p className="text-base-200">
                   As setas comparam as últimas mensagens com o início da sessão.
                 </p>
               </div>
@@ -195,10 +216,10 @@ export default function CoachingSummaryBar({ coachingHistory }: CoachingSummaryB
           />
           <button
             onClick={() => setExpanded(!expanded)}
-            className="rounded p-0.5 text-base-400 hover:text-base-300"
+            className="rounded-md p-1 text-base-300 transition-colors hover:bg-base-700 hover:text-base-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-base-400"
             aria-label={expanded ? "Recolher" : "Expandir"}
           >
-            {expanded ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
+            {expanded ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
           </button>
         </div>
       </div>
@@ -209,55 +230,46 @@ export default function CoachingSummaryBar({ coachingHistory }: CoachingSummaryB
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <div className="space-y-2 px-4 pb-3">
+            <div className="space-y-2.5 px-4 pb-3">
               {verdict && (
-                <p className="rounded-lg border border-base-500/20 bg-base-800/40 px-2.5 py-1.5 text-[11px] leading-snug text-base-200">
+                <p className="rounded-lg border border-base-600/40 bg-base-800 px-3 py-2 text-[11px] font-medium leading-snug text-base-100">
                   {verdict}
                 </p>
               )}
               <div className="space-y-2">
-                {rows.map(({ skill, label, description, displayScore, trend }) => {
-                  const barColor =
-                    displayScore >= 70
-                      ? "bg-emerald-500"
-                      : displayScore >= 45
-                        ? "bg-amber-500"
-                        : "bg-rose-500";
-
-                  return (
-                    <div key={skill} className="flex items-center gap-2">
-                      <span className="flex w-28 shrink-0 items-center gap-1 text-[10px] text-base-400">
-                        <span className="truncate">{label}</span>
-                        <InfoTooltip
-                          label={`O que é ${label}`}
-                          size={11}
-                          align="start"
-                          content={
-                            <div className="space-y-1">
-                              <p className="font-semibold text-base-50">{label}</p>
-                              <p>{description}</p>
-                            </div>
-                          }
-                        />
-                      </span>
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-base-700/60">
-                        <motion.div
-                          className={`h-full rounded-full ${barColor}`}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${displayScore}%` }}
-                          transition={{ duration: 0.5 }}
-                        />
-                      </div>
-                      <span className="flex w-10 shrink-0 items-center justify-end gap-0.5 text-[10px] text-base-400">
-                        <TrendIcon trend={trend} />
-                        <span>{displayScore}</span>
-                      </span>
+                {rows.map(({ skill, label, description, displayScore, trend }, index) => (
+                  <div key={skill} className="flex items-center gap-2.5">
+                    <span className="flex w-28 shrink-0 items-center gap-1 text-[11px] font-medium text-base-200">
+                      <span className="truncate">{label}</span>
+                      <InfoTooltip
+                        label={`O que é ${label}`}
+                        size={11}
+                        align="start"
+                        content={
+                          <div className="space-y-1">
+                            <p className="font-semibold text-base-50">{label}</p>
+                            <p>{description}</p>
+                          </div>
+                        }
+                      />
+                    </span>
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-base-700">
+                      <motion.div
+                        className={`h-full rounded-full ${bandColor(displayScore)}`}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${displayScore}%` }}
+                        transition={{ duration: 0.6, delay: index * 0.08, ease: "easeOut" }}
+                      />
                     </div>
-                  );
-                })}
+                    <span className="flex w-12 shrink-0 items-center justify-end gap-1 text-[11px] font-semibold tabular-nums text-base-100">
+                      <TrendIcon trend={trend} />
+                      <span>{displayScore}</span>
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </motion.div>
