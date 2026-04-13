@@ -153,6 +153,14 @@
   :root:not(.dark) .shadow-surface-2 {
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
   }
+
+  /* Coach bar — docked bottom toolbar shadow (both themes) */
+  .shadow-coach-bar {
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.35);
+  }
+  :root:not(.dark) .shadow-coach-bar {
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
+  }
 }
 
 /* --- Light mode color overrides for Tailwind classes --- */
